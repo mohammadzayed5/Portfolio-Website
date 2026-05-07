@@ -204,12 +204,13 @@ function Hero({ playSound, onOpenProject, starDensity, starHue }) {
             </a>
             <a
               className="btn btn-ghost"
-              href="#"
-              onClick={(e) => {e.preventDefault();playSound("click");}}>
-              
+              href="https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => playSound("click")}>
               Resume
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 2v8m0 0L4 7m3 3 3-3M3 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 7h8m0 0L7 3m4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
           </div>
