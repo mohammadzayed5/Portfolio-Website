@@ -1,0 +1,92 @@
+# Netlify Configuration for Portfolio Website
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Publish directory (root directory for static site)
+  publish = "."
+
+  # No build command needed for static HTML site
+  command = ""
+
+# Security headers for enhanced protection
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Content Security Policy
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; frame-src 'none'; object-src 'none';"
+
+    # Performance headers
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache control for HTML files (shorter cache)
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+# Cache control for CSS and JS (with fingerprinting)
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache control for images
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirects and rewrites
+[[redirects]]
+  from = "/resume"
+  to = "https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit"
+  status = 301
+  force = true
+
+# Serve Portfolio.html as the root page
+[[redirects]]
+  from = "/"
+  to = "/Portfolio.html"
+  status = 200
+
+# Fallback for all other routes
+[[redirects]]
+  from = "/*"
+  to = "/Portfolio.html"
+  status = 200
+
+# Environment variables (for future use)
+[context.production.environment]
+  NODE_ENV = "production"
+
+[context.deploy-preview.environment]
+  NODE_ENV = "development"
+
+# Form handling (for contact form)
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = true
