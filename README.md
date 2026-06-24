@@ -1,4 +1,4 @@
-# Mohammad Zayed — Portfolio
+# Mohammad Zayed | Portfolio
 
 A modern, interactive portfolio built with React featuring space particle animations, procedural sound effects, and smooth scroll-triggered animations. Inspired by Linear's design aesthetic.
 

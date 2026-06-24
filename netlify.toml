@@ -5,8 +5,8 @@
   # Publish directory (root directory for static site)
   publish = "."
 
-  # No build command needed for static HTML site
-  command = ""
+  # Pre-compile JSX → /dist via esbuild before deploy
+  command = "npm run build"
 
 # Security headers for enhanced protection
 [[headers]]
@@ -54,16 +54,16 @@
   status = 301
   force = true
 
-# Serve Portfolio.html as the root page
+# Pretty URL for the about page
 [[redirects]]
-  from = "/"
-  to = "/Portfolio.html"
+  from = "/about"
+  to = "/about.html"
   status = 200
 
-# Fallback for all other routes
+# SPA fallback: any unmatched route serves the home app
 [[redirects]]
   from = "/*"
-  to = "/Portfolio.html"
+  to = "/index.html"
   status = 200
 
 # Environment variables (for future use)

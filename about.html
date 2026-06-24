@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0a0a0a" />
+
+<title>About Mohammad Zayed | Software Engineer & CS Student</title>
+<meta name="description" content="About Mohammad Zayed, a Computer Science student at Cal State Long Beach and full-stack software engineer based in Orange County, CA. Learn about my background, work, and what I'm building." />
+<meta name="author" content="Mohammad Zayed" />
+<link rel="canonical" href="https://mohammadzayed.com/about" />
+
+<!-- Favicons -->
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="profile" />
+<meta property="og:url" content="https://mohammadzayed.com/about" />
+<meta property="og:title" content="About Mohammad Zayed | Software Engineer & CS Student" />
+<meta property="og:description" content="Computer Science student at Cal State Long Beach and full-stack software engineer building web and iOS applications." />
+<meta property="og:image" content="https://mohammadzayed.com/assets/headshot.jpg" />
+<meta property="og:image:alt" content="Headshot of Mohammad Zayed" />
+<meta property="og:site_name" content="Mohammad Zayed" />
+<meta property="profile:first_name" content="Mohammad" />
+<meta property="profile:last_name" content="Zayed" />
+<meta property="profile:username" content="mohammadzayed5" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content="https://mohammadzayed.com/about" />
+<meta name="twitter:title" content="About Mohammad Zayed | Software Engineer & CS Student" />
+<meta name="twitter:description" content="Computer Science student at Cal State Long Beach and full-stack software engineer building web and iOS applications." />
+<meta name="twitter:image" content="https://mohammadzayed.com/assets/headshot.jpg" />
+
+<!-- Person schema (same as home): reinforces identity cluster -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Mohammad Zayed",
+  "givenName": "Mohammad",
+  "familyName": "Zayed",
+  "url": "https://mohammadzayed.com",
+  "image": "https://mohammadzayed.com/assets/headshot.jpg",
+  "jobTitle": "Software Engineer",
+  "description": "Computer Science student at Cal State Long Beach and full-stack software engineer building web and iOS applications.",
+  "alumniOf": {
+    "@type": "CollegeOrUniversity",
+    "name": "California State University, Long Beach",
+    "sameAs": "https://www.csulb.edu/"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Lake Forest",
+    "addressRegion": "CA",
+    "addressCountry": "US"
+  },
+  "email": "mailto:mohammadzayed521@gmail.com",
+  "knowsAbout": [
+    "Software Engineering",
+    "Full-Stack Web Development",
+    "iOS Development",
+    "React",
+    "Python",
+    "Flask",
+    "Swift",
+    "JavaScript",
+    "C++",
+    "Java"
+  ],
+  "sameAs": [
+    "https://github.com/mohammadzayed5",
+    "https://www.linkedin.com/in/mohammadzayedd/"
+  ]
+}
+</script>
+
+<!-- Breadcrumb -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://mohammadzayed.com/" },
+    { "@type": "ListItem", "position": 2, "name": "About", "item": "https://mohammadzayed.com/about" }
+  ]
+}
+</script>
+
+<link rel="preload" as="image" href="/assets/headshot.jpg" fetchpriority="high" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg-2: #0d0d10;
+  --bg-3: #111114;
+  --fg: #f5f6f8;
+  --fg-mute: #a1a1aa;
+  --fg-faint: #52525b;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --accent: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.15);
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --font-display: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --container: 880px;
+  --pad: clamp(20px, 4vw, 48px);
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--accent-soft); color: var(--fg); }
+
+/* Page background: subtle radial glow like home */
+.page-bg {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(59,130,246,0.10), transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(59,130,246,0.06), transparent 50%),
+    var(--bg);
+}
+
+/* Header */
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px var(--pad);
+  background: linear-gradient(to bottom, rgba(10,10,10,.92), rgba(10,10,10,.55));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: 0.01em;
+}
+.brand-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+.header-links {
+  display: flex; gap: 28px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 500;
+  color: var(--fg-mute);
+}
+.header-links a { transition: color .2s; }
+.header-links a:hover { color: var(--fg); }
+.header-links a.is-active { color: var(--fg); font-weight: 600; }
+
+/* Main */
+main { max-width: var(--container); margin: 0 auto; padding: 64px var(--pad) 96px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--font-display); font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 18px;
+}
+.eyebrow-line { height: 1px; width: 32px; background: var(--line-2); }
+
+h1.about-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 64px);
+  line-height: 1.05; letter-spacing: -0.02em;
+  font-weight: 700;
+  margin: 0 0 24px;
+}
+h1.about-title .accent { color: var(--accent); }
+
+.lede {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.4;
+  color: var(--fg);
+  margin: 0 0 48px;
+  max-width: 56ch;
+}
+
+/* Hero row */
+.hero-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 48px;
+  align-items: center;
+  margin-bottom: 64px;
+}
+.headshot {
+  width: 180px; height: 180px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(59,130,246,0.15);
+}
+.headshot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+@media (max-width: 640px) {
+  .hero-row { grid-template-columns: 1fr; gap: 28px; }
+  .headshot { width: 140px; height: 140px; order: -1; }
+}
+
+/* Quick facts */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0 0 56px;
+}
+.fact {
+  background: var(--bg-2);
+  padding: 22px 24px;
+}
+.fact-label {
+  font-family: var(--font-display);
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 8px;
+}
+.fact-value {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 500;
+  color: var(--fg);
+}
+@media (max-width: 640px) { .facts { grid-template-columns: 1fr; } }
+
+/* Sections */
+section.about-section { margin-bottom: 56px; }
+section.about-section h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.2; letter-spacing: -0.01em;
+  font-weight: 600;
+  margin: 0 0 18px;
+}
+section.about-section p {
+  color: var(--fg);
+  font-size: 16.5px;
+  margin: 0 0 16px;
+  max-width: 64ch;
+}
+section.about-section p a { color: var(--accent); border-bottom: 1px solid var(--accent-soft); transition: border-color .2s; }
+section.about-section p a:hover { border-color: var(--accent); }
+
+/* Tech list */
+.tech-pills {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 10px;
+}
+.tech-pills span {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+/* Links section */
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+@media (max-width: 640px) { .links-grid { grid-template-columns: 1fr; } }
+.link-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--bg-2);
+  transition: border-color .2s, transform .2s, background .2s;
+  font-family: var(--font-display);
+}
+.link-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-3);
+  transform: translateY(-1px);
+}
+.link-card .label { font-weight: 600; font-size: 15px; }
+.link-card .value { font-size: 13px; color: var(--fg-mute); }
+.link-card .arrow { color: var(--accent); }
+
+/* Footer */
+footer.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 24px var(--pad);
+  display: flex; justify-content: space-between; align-items: center;
+  color: var(--fg-mute); font-size: 13px;
+  font-family: var(--font-display);
+}
+footer.site-footer a { transition: color .2s; }
+footer.site-footer a:hover { color: var(--fg); }
+.footer-links { display: flex; gap: 20px; }
+
+/* CTA back to home */
+.cta-back {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 500;
+  color: var(--fg);
+  background: rgba(255,255,255,.02);
+  transition: all .25s;
+  margin-top: 16px;
+}
+.cta-back:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+</style>
+</head>
+<body>
+<div class="page-bg" aria-hidden="true"></div>
+
+<header class="site-header">
+  <a href="/" class="brand" aria-label="Mohammad Zayed, Home">
+    <span class="brand-dot"></span>
+    Mohammad Zayed
+  </a>
+  <nav class="header-links" aria-label="Primary">
+    <a href="/">Home</a>
+    <a href="/about" class="is-active" aria-current="page">About</a>
+    <a href="/#projects">Projects</a>
+    <a href="/#contact">Contact</a>
+  </nav>
+</header>
+
+<main>
+  <div class="eyebrow"><span>About</span><span class="eyebrow-line" aria-hidden="true"></span><span>Who I am</span></div>
+
+  <div class="hero-row">
+    <div>
+      <h1 class="about-title">Hi, I'm <span class="accent">Mohammad Zayed</span>.</h1>
+      <p class="lede">A software engineer and Computer Science student at Cal State Long Beach, based in Orange County, California. I build full-stack web and iOS applications shaped by four years of frontline leadership experience.</p>
+    </div>
+    <div class="headshot">
+      <picture>
+        <source srcset="/assets/headshot.webp" type="image/webp" />
+        <img src="/assets/headshot.jpg" alt="Headshot of Mohammad Zayed" width="180" height="180" loading="eager" decoding="async" />
+      </picture>
+    </div>
+  </div>
+
+  <div class="facts" role="list" aria-label="Quick facts">
+    <div class="fact" role="listitem">
+      <div class="fact-label">Location</div>
+      <div class="fact-value">Lake Forest, California</div>
+    </div>
+    <div class="fact" role="listitem">
+      <div class="fact-label">Education</div>
+      <div class="fact-value">B.S. Computer Science · CSULB '27</div>
+    </div>
+    <div class="fact" role="listitem">
+      <div class="fact-label">Current role</div>
+      <div class="fact-value">Director · Chick-fil-A Foothill Ranch</div>
+    </div>
+    <div class="fact" role="listitem">
+      <div class="fact-label">Seeking</div>
+      <div class="fact-value">Software Engineering internships</div>
+    </div>
+  </div>
+
+  <section class="about-section">
+    <h2>What I do</h2>
+    <p>I build software that solves real problems for real users. My work spans the full stack: React frontends, Python/Flask backends, SQLite/Postgres databases, and native iOS development in Swift. I care about shipping things that work and bring value to real people.</p>
+    <p>Recent projects include my <a href="https://minigolfscoretracker.com/">Mini Golf Score Tracker</a>, a full-stack web app and iOS app, and <a href="https://cfafoothill.com/">cfafoothill.com</a>, a dual-portal website that serves a 90-person team. I'm currently building LockedIn, an iOS macro-tracking app focused on helping people achieve their health goals.</p>
+  </section>
+
+  <section class="about-section">
+    <h2>How I got here</h2>
+    <p>I started at Chick-fil-A Foothill Ranch as a team member in 2022 and worked my way up to Director by mid-2024. Along the way I have learned how to serve real people and use that serving mindset in the software that I build.</p>
+  </section>
+
+  <section class="about-section">
+    <h2>Stack I work with</h2>
+    <p>Languages, frameworks, and tools I reach for first:</p>
+    <div class="tech-pills" role="list">
+      <span role="listitem">Python</span>
+      <span role="listitem">JavaScript</span>
+      <span role="listitem">TypeScript</span>
+      <span role="listitem">C++</span>
+      <span role="listitem">Java</span>
+      <span role="listitem">Swift</span>
+      <span role="listitem">React</span>
+      <span role="listitem">Flask</span>
+      <span role="listitem">Node.js</span>
+      <span role="listitem">SQLite</span>
+      <span role="listitem">Git</span>
+      <span role="listitem">Netlify</span>
+      <span role="listitem">Xcode</span>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <h2>Where to find me</h2>
+    <div class="links-grid">
+      <a class="link-card" href="https://github.com/mohammadzayed5" rel="me noopener" target="_blank">
+        <div>
+          <div class="label">GitHub</div>
+          <div class="value">@mohammadzayed5</div>
+        </div>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+      <a class="link-card" href="https://www.linkedin.com/in/mohammadzayedd/" rel="me noopener" target="_blank">
+        <div>
+          <div class="label">LinkedIn</div>
+          <div class="value">/in/mohammadzayedd</div>
+        </div>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+      <a class="link-card" href="mailto:mohammadzayed521@gmail.com">
+        <div>
+          <div class="label">Email</div>
+          <div class="value">mohammadzayed521@gmail.com</div>
+        </div>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+      <a class="link-card" href="/resume">
+        <div>
+          <div class="label">Resume</div>
+          <div class="value">Latest CV (Google Doc)</div>
+        </div>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+    </div>
+    <a class="cta-back" href="/" aria-label="Back to home">← Back to home</a>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div>© 2026 Mohammad Zayed</div>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="https://github.com/mohammadzayed5" rel="me noopener" target="_blank">GitHub</a>
+    <a href="https://www.linkedin.com/in/mohammadzayedd/" rel="me noopener" target="_blank">LinkedIn</a>
+    <a href="/resume">Resume</a>
+  </nav>
+</footer>
+</body>
+</html>
