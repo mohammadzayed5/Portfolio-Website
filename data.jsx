@@ -16,7 +16,7 @@ const PROJECTS = [
     githubUrl: "https://github.com/mohammadzayed5/Mini-Golf-Score-Card",
     stack: ["React", "Flask", "Python", "JWT Auth", "SQLite", "Netlify", "Render"],
     year: "2025",
-    role: "Solo — design, frontend, backend, deploy",
+    role: "Solo: design, frontend, backend, deploy",
     overview:
       "A full-stack web app designed to track mini golf scores in real-time with secure player authentication. Features include live leaderboard updates, player management, and comprehensive game history with 99.9% uptime deployed on Render and Netlify.",
     problem:
@@ -48,13 +48,13 @@ const PROJECTS = [
     githubUrl: "https://github.com/mohammadzayed5/Chick-Fil-A-Foothill-Ranch-Website",
     stack: ["React", "Netlify", "Dual-Portal", "Team Management"],
     year: "2024",
-    role: "Lead Developer — Built alongside Director role on-site",
+    role: "Lead Developer, built alongside Director role on-site",
     overview:
       "Two surfaces, one codebase. Guests see hours, catering, and community events on the public site. Logged-in team members access their schedule, training modules, and leadership announcements through the team portal. Built and shipped while running shifts as Assistant Director.",
     problem:
       "The store had two disconnected systems: a stale marketing site and chaotic group text for internal communications. Leadership wanted one unified home for both audiences without paying for an enterprise HRIS.",
     approach: [
-      "Single React app with route-level authentication gates — public marketing routes are statically rendered, team routes hydrate behind session check.",
+      "Single React app with route-level authentication gates: public marketing routes are statically rendered, team routes hydrate behind session check.",
       "Dual-interface design: clean public storefront for customers, comprehensive team portal for 90+ staff members.",
       "Mobile-first: 80% of team members open the portal on their phones between rushes.",
       "Onboarded the operator team with a one-page printed cheatsheet and zero training tickets.",
@@ -85,9 +85,9 @@ const PROJECTS = [
     color: "#3b82f6",
     stack: ["iOS", "Swift", "Health Tracking", "UI Design"],
     year: "2026",
-    role: "Solo — currently building",
+    role: "Solo, currently building",
     overview:
-      "A nutrition tracker for people who already know what they're doing — no streaks, no badges, no nagging. Log meals, track macros, monitor progress. The 'LockedIn' brand is about quiet discipline and focused execution, not gamified noise.",
+      "A nutrition tracker for people who already know what they're doing: no streaks, no badges, no nagging. Log meals, track macros, monitor progress. The 'LockedIn' brand is about quiet discipline and focused execution, not gamified noise.",
     problem:
       "Existing macro trackers are bloated with social features, ads, and upsells. Users needed the core 80% of fitness tracking functionality with a clean UI that respects their time and doesn't require constant engagement.",
     approach: [
@@ -114,7 +114,7 @@ const EXPERIENCE = [
   {
     role: "Director",
     org: "Chick-fil-A · Foothill Ranch",
-    period: "Jun 2024 — Present",
+    period: "Jun 2024 - Present",
     bullets: [
       "Designed and developed a custom restaurant website (cfafoothill.com) to centralize recruitment, team culture, and guest resources, featuring job application portals, location details, and community engagement content for 50+ team members.",
       "Increased overall customer satisfaction from 59% to 74% within 2 years as measured by CEM scores, by designing targeted initiatives and leading weekly coaching sessions for team of 40+ employees.",
@@ -125,7 +125,7 @@ const EXPERIENCE = [
   {
     role: "Shift Lead",
     org: "Chick-fil-A · Foothill Ranch",
-    period: "Jun 2023 — Jun 2024",
+    period: "Jun 2023 - Jun 2024",
     bullets: [
       "Strengthened hiring quality as measured by improved new hire retention and performance, by conducting structured behavioral interviews and developing evaluation criteria with company culture and operational needs.",
     ],
@@ -133,7 +133,7 @@ const EXPERIENCE = [
   {
     role: "Team Member",
     org: "Chick-fil-A · Foothill Ranch",
-    period: "Mar 2022 — May 2023",
+    period: "Mar 2022 - May 2023",
     bullets: [
       "Delivered exceptional customer service as measured by consistent positive guest feedback, by proactively addressing guest needs and creating personalized \"moments of care\" during high-volume service periods.",
     ],

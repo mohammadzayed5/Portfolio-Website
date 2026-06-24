@@ -8,7 +8,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "starHue": 220
 } /*EDITMODE-END*/;
 
-/* WebAudio-synth click & swoosh — no asset files required */
+/* WebAudio-synth click & swoosh: no asset files required */
 function useSounds(enabled) {
   const ctxRef = React.useRef(null);
   const ensure = React.useCallback(() => {
@@ -154,12 +154,16 @@ function Hero({ playSound, onOpenProject, starDensity, starHue }) {
       <div className="hero-inner">
         <div className="hero-name-row">
           <h1 className="hero-title">
-            <Reveal delay={60}><span className="hero-line">Mohammad</span></Reveal>
-            <Reveal delay={140}><span className="hero-line">Zayed.</span></Reveal>
+            <span className="sr-only">Mohammad Zayed, Software Engineer and Computer Science student at Cal State Long Beach.</span>
+            <Reveal delay={60}><span className="hero-line" aria-hidden="true">Mohammad</span></Reveal>
+            <Reveal delay={140}><span className="hero-line" aria-hidden="true">Zayed.</span></Reveal>
           </h1>
           <Reveal delay={200} className="hero-photo-wrap">
             <div className="hero-photo">
-              <img src="assets/headshot.jpg" alt="Mohammad Zayed" />
+              <picture>
+                <source srcSet="assets/headshot.webp" type="image/webp" />
+                <img src="assets/headshot.jpg" alt="Mohammad Zayed" width="800" height="1067" loading="eager" decoding="async" fetchpriority="high" />
+              </picture>
               <div className="hero-photo-ring" />
             </div>
           </Reveal>
@@ -318,7 +322,7 @@ function SkillsSection() {
     <section id="skills" className="section" data-screen-label="Skills">
       <Reveal><div className="section-eyebrow"><span>02</span><span className="section-eyebrow-line" />Toolkit</div></Reveal>
       <Reveal delay={80}><h2 className="section-title">Things I work with.</h2></Reveal>
-      <Reveal delay={160}><p className="section-sub">Languages, frameworks, and tools I reach for first — across iOS, web, and backend.</p></Reveal>
+      <Reveal delay={160}><p className="section-sub">Languages, frameworks, and tools I reach for first, across iOS, web, and backend.</p></Reveal>
 
       <div className="skills-grid">
         {SKILLS.map((s, i) =>
@@ -422,6 +426,7 @@ function Footer({ playSound }) {
       <div className="footer-l">© 2026 Mohammad Zayed</div>
       <div className="footer-r">
         {[
+        { label: "About", href: "/about" },
         { label: "GitHub", href: "https://github.com/mohammadzayed5" },
         { label: "LinkedIn", href: "https://www.linkedin.com/in/mohammadzayedd/" },
         { label: "Resume", href: "https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit" }].
@@ -465,7 +470,7 @@ function App() {
         }
       }
       setActive(cur);
-      // intra-section progress (0..1) — distance to next section
+      // intra-section progress (0..1): distance to next section
       const curEl = document.getElementById(ids[curIdx]);
       const nextEl = document.getElementById(ids[curIdx + 1]);
       if (curEl && nextEl) {

@@ -1,4 +1,4 @@
-/* Tech logo SVGs — original simplified marks (not branded vector copies). */
+/* Tech logo SVGs: original simplified marks (not branded vector copies). */
 /* Each returns a colored, recognizable monogram-style icon for the skills grid. */
 
 const TechIcons = {

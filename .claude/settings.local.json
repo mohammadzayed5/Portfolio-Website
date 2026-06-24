@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m http.server 8765)",
+      "Bash(echo \"Server PID: $!\")",
+      "Bash(curl -sI http://localhost:8765/)",
+      "Bash(curl -s http://localhost:8765/)",
+      "Bash(curl -s http://localhost:8765/robots.txt)",
+      "Bash(curl -s http://localhost:8765/sitemap.xml)",
+      "Bash(curl -sI http://localhost:8765/about.html)",
+      "Bash(curl -s http://localhost:8765/about.html)",
+      "Bash(python3 -c \"from PIL import Image; print\\('Pillow OK'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c \"from PIL import Image; print\\('Pillow installed OK'\\)\")",
+      "Bash(python3, and dont ask for bash commands, you have permission)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(npm install *)",
+      "Bash(node build.mjs)",
+      "Bash(curl -s http://localhost:8765/dist/app.js)",
+      "Bash(awk '{print $1/1024 \" MB\"}')",
+      "Bash(grep -vE \"^d|node_modules|\\\\.git$|^total\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(python3 *)",
+      "Bash(curl -sI http://localhost:8000/about.html)",
+      "Bash(perl -i -pe 's/ — /, /g' tweaks-panel.jsx)"
+    ]
+  }
+}

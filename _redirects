@@ -7,5 +7,8 @@
 # Ensure HTTPS
 http://mohammadzayed.com/* https://mohammadzayed.com/:splat 301!
 
-# 404 page fallback
-/* /Portfolio.html 404
+# Pretty URL for the about page
+/about /about.html 200
+
+# 404 fallback to home (SPA)
+/* /index.html 200
