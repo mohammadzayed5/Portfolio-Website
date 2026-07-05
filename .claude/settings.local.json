@@ -22,7 +22,20 @@
       "Bash(grep -v \"^$\")",
       "Bash(python3 *)",
       "Bash(curl -sI http://localhost:8000/about.html)",
-      "Bash(perl -i -pe 's/ — /, /g' tweaks-panel.jsx)"
+      "Bash(perl -i -pe 's/ — /, /g' tweaks-panel.jsx)",
+      "Bash(npm run *)",
+      "Bash(curl -sI https://mohammadzayed.com)",
+      "Bash(curl -s https://mohammadzayed.com)",
+      "Bash(curl -sI https://mohammadzayed.com/about)",
+      "Bash(curl -s https://mohammadzayed.com/robots.txt)",
+      "Bash(curl -sI https://mohammadzayed.com/sitemap.xml)",
+      "Bash(curl -sI https://mohammadzayed.com/favicon.ico)",
+      "Bash(curl -s https://mohammadzayed.com/sitemap.xml)",
+      "Bash(xxd)",
+      "Bash(xmllint --noout sitemap.xml)",
+      "Bash(xxd sitemap.xml)",
+      "Bash(xmllint --schema https://www.sitemaps.org/schemas/sitemap-0.9/sitemap.xsd sitemap.xml --noout)",
+      "Bash(curl -sI https://mohammadzayed.com/robots.txt)"
     ]
   }
 }

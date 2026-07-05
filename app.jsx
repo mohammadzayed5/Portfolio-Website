@@ -1,5 +1,8 @@
 /* Main App */
 
+// Dev-only features (tweaks panel) show on localhost, never in production
+const IS_DEV = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "#3b82f6",
   "starDensity": 90,
@@ -289,13 +292,12 @@ function ProjectCard({ project, idx, onOpen, playSound }) {
           {project.stack.slice(0, 3).map((s) => <span key={s}>{s}</span>)}
           {project.stack.length > 3 && <span className="pcard-stack-more">+{project.stack.length - 3}</span>}
         </div>
-        {(project.liveUrl || project.appUrl || project.githubUrl) &&
-          <div className="pcard-links" onClick={(e) => e.stopPropagation()}>
-            {project.liveUrl && <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>Web ↗</a>}
-            {project.appUrl && <a href={project.appUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>App Store ↗</a>}
-            {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>GitHub ↗</a>}
-          </div>
-        }
+        <div className="pcard-links" onClick={(e) => e.stopPropagation()}>
+          <a href={`/projects/${project.id}`} className="pcard-link" onClick={(e) => e.stopPropagation()}>Case study ↗</a>
+          {project.liveUrl && <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>Web ↗</a>}
+          {project.appUrl && <a href={project.appUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>App Store ↗</a>}
+          {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="pcard-link" onClick={(e) => e.stopPropagation()}>GitHub ↗</a>}
+        </div>
       </div>
     </article>);
 
@@ -514,6 +516,7 @@ function App() {
 
       }
 
+      {IS_DEV &&
       <TweaksPanel title="Tweaks">
         <TweakSection title="Accent">
           <TweakColor
@@ -543,6 +546,7 @@ function App() {
           <TweakToggle label="Sound effects" value={tweaks.soundEnabled} onChange={(v) => setTweak("soundEnabled", v)} />
         </TweakSection>
       </TweaksPanel>
+      }
     </div>);
 
 }

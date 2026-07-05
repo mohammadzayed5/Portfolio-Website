@@ -19,7 +19,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
     # Content Security Policy
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; frame-src 'none'; object-src 'none';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://fonts.googleapis.com https://gc.zgo.at; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://mohammadzayed.goatcounter.com; frame-src 'none'; object-src 'none';"
 
     # Performance headers
     Cache-Control = "public, max-age=31536000, immutable"
@@ -59,24 +59,7 @@
   [headers.values]
     Cache-Control = "public, max-age=300"
 
-# Redirects and rewrites
-[[redirects]]
-  from = "/resume"
-  to = "https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit"
-  status = 301
-  force = true
-
-# Pretty URL for the about page
-[[redirects]]
-  from = "/about"
-  to = "/about.html"
-  status = 200
-
-# SPA fallback: any unmatched route serves the home app
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Redirects live in the _redirects file (single source of truth)
 
 # Environment variables (for future use)
 [context.production.environment]
