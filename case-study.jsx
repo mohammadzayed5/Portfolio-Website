@@ -107,19 +107,6 @@ function CaseStudy({ project, onClose, playSound }) {
             </div>
           )}
 
-          {project.images.length === 0 && (
-            <div className="case-placeholder">
-              <div className="case-placeholder-inner">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(125,163,240,.5)" strokeWidth="1.2">
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <path d="m3 17 5-5 4 4 3-3 6 6" />
-                  <circle cx="9" cy="10" r="1.2" fill="rgba(125,163,240,.5)" stroke="none" />
-                </svg>
-                <div className="case-placeholder-l">screenshots coming with v1 launch</div>
-              </div>
-            </div>
-          )}
-
           <div className="case-foot">
             <div className="case-foot-l">Want to talk about this project?</div>
             <a href="mailto:mohammadzayed521@gmail.com" className="btn btn-primary case-foot-cta" onClick={() => playSound("click")}>
