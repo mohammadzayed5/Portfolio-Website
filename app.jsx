@@ -429,6 +429,7 @@ function Footer({ playSound }) {
       <div className="footer-r">
         {[
         { label: "About", href: "/about" },
+        { label: "Writing", href: "/blog" },
         { label: "GitHub", href: "https://github.com/mohammadzayed5" },
         { label: "LinkedIn", href: "https://www.linkedin.com/in/mohammadzayedd/" },
         { label: "Resume", href: "https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit" }].
