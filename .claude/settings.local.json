@@ -35,7 +35,20 @@
       "Bash(xmllint --noout sitemap.xml)",
       "Bash(xxd sitemap.xml)",
       "Bash(xmllint --schema https://www.sitemaps.org/schemas/sitemap-0.9/sitemap.xsd sitemap.xml --noout)",
-      "Bash(curl -sI https://mohammadzayed.com/robots.txt)"
+      "Bash(curl -sI https://mohammadzayed.com/robots.txt)",
+      "Bash(curl -sL \"https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/export?format=pdf\" -o /tmp/resume-test.pdf --max-time 30)",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:8000)",
+      "Bash(xargs kill -9)",
+      "Bash(grep -rniE \"[a-z0-9._%+-]+@[a-z0-9.-]+\\\\.[a-z]{2,}\" --include=\"*.jsx\" --include=\"*.html\" --include=\"*.mjs\" --include=\"*.toml\" --include=\"*.md\" --include=\"*.txt\" --include=\"*.xml\" .)",
+      "Bash(grep -oiE \"[a-z0-9._%+-]+@[a-z0-9.-]+\\\\.[a-z]{2,}\")",
+      "Bash(git config *)",
+      "Bash(curl -s https://mohammadzayed.com/dist/app.js)",
+      "Bash(grep -oiE \"[a-z0-9._%+-]+@[a-z0-9.-]+\\\\.[a-z]{2,}\" /Users/mohammadzayed/dev/Portfolio-Website/dist/app.js)",
+      "Bash(curl -s https://mohammadzayed.com/about)",
+      "Bash(curl -s https://mohammadzayed.com/projects/minigolf)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://gc.zgo.at/count.js)",
+      "Read(//Users/mohammadzayed/.git/**)"
     ]
   }
 }

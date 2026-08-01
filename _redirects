@@ -10,6 +10,10 @@ http://mohammadzayed.com/* https://mohammadzayed.com/:splat 301!
 # Pretty URL for the about page
 /about /about.html 200
 
+# Pretty URL for the writing index (and future individual posts, if added)
+/blog /blog.html 200
+/writing /blog.html 200
+
 # Pretty URLs for project case studies (generated at build time)
 /projects/:id /projects/:id.html 200
 

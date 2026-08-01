@@ -64,6 +64,15 @@ function ProjectIcon({ kind, size = 22 }) {
       </svg>
     );
   }
+  if (kind === "layers") {
+    return (
+      <svg {...props}>
+        <path d="M12 3l9 5-9 5-9-5 9-5z" fill="rgba(125,163,240,.15)" />
+        <path d="M3 12l9 5 9-5" />
+        <path d="M3 17l9 5 9-5" />
+      </svg>
+    );
+  }
   return null;
 }
 

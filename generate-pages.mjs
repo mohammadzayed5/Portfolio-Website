@@ -227,6 +227,7 @@ footer.site-footer a:hover { color: var(--fg); }
     <a href="/">Home</a>
     <a href="/about">About</a>
     <a href="/#projects">Projects</a>
+    <a href="/blog">Writing</a>
     <a href="/#contact">Contact</a>
   </nav>
 </header>
