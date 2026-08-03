@@ -89,7 +89,7 @@ const PROJECTS = [
     year: "2026",
     role: "Solo, founder of Zayed Software LLC",
     overview:
-      "A multi-tenant SaaS platform that runs the operations of my Chick-fil-A store: scheduling, training modules, spotlight videos, invite codes, and accountability tracking. Ships as an iOS app and a web dashboard from one codebase. Used daily by our 90-person team with 77% weekly-active usage, and being prepared for outside pilots through the SoCal Women's Operator Group.",
+      "A multi-tenant SaaS platform that runs the operations of my Chick-fil-A store: scheduling, training modules, spotlight videos, invite codes, and accountability tracking. Ships as an iOS app and a web dashboard from one codebase. Used daily by a 40-user team of leaders and shift crew with 77% weekly-active usage, and being prepared for outside pilots through the SoCal Women's Operator Group.",
     problem:
       "QSR operators either pay $80 to $150 per store per month for tools like Jolt or 7shifts, or they run their operation on paper checklists and group chats. I wanted one tool that owned scheduling, training, communication, and accountability, that spoke both English and Spanish, and that a single-store operator could say yes to on the spot.",
     approach: [
@@ -100,7 +100,7 @@ const PROJECTS = [
       "Instrumented every screen with PostHog to see real weekly-active numbers, retention cohorts, and the funnels I need when pitching outside operators.",
     ],
     metrics: [
-      { v: "77%", l: "weekly active team" },
+      { v: "77%", l: "weekly active (40 users)" },
       { v: "1,367", l: "i18n keys / language" },
       { v: "iOS + Web", l: "one codebase" },
     ],
