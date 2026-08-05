@@ -30,16 +30,19 @@
   [headers.values]
     Cache-Control = "public, max-age=3600, must-revalidate"
 
-# Cache control for CSS and JS (with fingerprinting)
+# Cache control for CSS and JS.
+# Filenames are not fingerprinted (data.js, app.js, etc), so we use a short cache with
+# must-revalidate + a build-time ?v=<git-sha> query string in <script> tags. That way every
+# deploy invalidates the browser cache for existing visitors while keeping the CDN happy.
 [[headers]]
   for = "/*.css"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 # Cache control for images
 [[headers]]
