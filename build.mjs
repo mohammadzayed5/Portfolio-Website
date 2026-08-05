@@ -3,8 +3,9 @@
 // independently, no bundling needed.
 
 import { build } from 'esbuild';
-import { mkdir, readdir } from 'fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { execSync } from 'child_process';
 
 const ROOT = new URL('.', import.meta.url).pathname;
 const OUT = join(ROOT, 'dist');
@@ -40,4 +41,22 @@ for (const file of FILES) {
   });
 }
 
-console.log(`\n✓ Built ${FILES.length} files into /dist`);
+let VERSION;
+try {
+  VERSION = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
+} catch {
+  VERSION = Date.now().toString(36);
+}
+
+const HTML_FILES = ['index.html'];
+for (const file of HTML_FILES) {
+  const path = join(ROOT, file);
+  const html = await readFile(path, 'utf-8');
+  const updated = html.replace(
+    /src="\/dist\/([a-z0-9-]+)\.js(?:\?v=[^"]*)?"/g,
+    `src="/dist/$1.js?v=${VERSION}"`,
+  );
+  if (updated !== html) await writeFile(path, updated);
+}
+
+console.log(`\n✓ Built ${FILES.length} files into /dist (v=${VERSION})`);
