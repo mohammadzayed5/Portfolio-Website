@@ -1,8 +1,8 @@
 # Netlify Redirects File
 # https://docs.netlify.com/routing/redirects/
 
-# Redirect resume link
-/resume https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit 301!
+# Resume link points to the PDF checked into the repo (single source of truth).
+/resume /resume.pdf 301!
 
 # Ensure HTTPS
 http://mohammadzayed.com/* https://mohammadzayed.com/:splat 301!
