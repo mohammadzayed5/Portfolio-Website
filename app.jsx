@@ -89,6 +89,22 @@ function Reveal({ children, delay = 0, as: Tag = "div", className = "" }) {
 
 }
 
+/* Live local-time pill, like the one on zayedsoftwarellc.com */
+function NavClock() {
+  const fmt = () =>
+    new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Los_Angeles"
+    });
+  const [time, setTime] = React.useState(fmt);
+  React.useEffect(() => {
+    const id = setInterval(() => setTime(fmt()), 15000);
+    return () => clearInterval(id);
+  }, []);
+  return <div className="nav-clock" aria-hidden="true">LAKE FOREST {time}</div>;
+}
+
 function Nav({ active, onJump, playSound, progress }) {
   const items = [
   { id: "top", label: "Home" },
@@ -137,6 +153,8 @@ function Nav({ active, onJump, playSound, progress }) {
         </div>
       </div>
 
+      <NavClock />
+
       <button
         className="nav-contact"
         onClick={() => {playSound("click");onJump("contact");}}>
@@ -149,12 +167,20 @@ function Hero({ playSound, onOpenProject, starDensity, starHue }) {
   return (
     <section id="top" className="hero">
       <div className="hero-bg">
+        <div className="hero-bg-aurora" />
         <ParticleField density={starDensity} hue={starHue} />
         <div className="hero-bg-grid" />
         <div className="hero-bg-glow" />
       </div>
 
       <div className="hero-inner">
+        <Reveal>
+          <span className="hero-eyebrow">
+            <span className="eyebrow-dot" />
+            Open to SWE internships · Summer 2027
+          </span>
+        </Reveal>
+
         <div className="hero-name-row">
           <h1 className="hero-title">
             <span className="sr-only">Mohammad Zayed, Software Engineer and Computer Science student at Cal State Long Beach.</span>
@@ -173,8 +199,8 @@ function Hero({ playSound, onOpenProject, starDensity, starHue }) {
         </div>
 
         <Reveal delay={260}>
-          <p className="hero-sub">
-            CS student. Full-stack builder. <span className="hero-sub-mute">Seeking SWE internships.</span>
+          <p className="hero-tagline">
+            I build software people rely on <em>daily</em>.
           </p>
         </Reveal>
 
@@ -211,7 +237,7 @@ function Hero({ playSound, onOpenProject, starDensity, starHue }) {
             </a>
             <a
               className="btn btn-ghost"
-              href="https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit"
+              href="/resume"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => playSound("click")}>
@@ -284,6 +310,16 @@ function ProjectCard({ project, idx, onOpen, playSound }) {
       <div className="pcard-name">{project.name}</div>
       <div className="pcard-tag">{project.tag}</div>
       <div className="pcard-desc">{project.short}</div>
+      {project.metrics && project.metrics.length > 0 &&
+        <div className="pcard-stats">
+          {project.metrics.slice(0, 2).map((m) =>
+            <div key={m.l}>
+              <div className="pcard-stat-v">{m.v}</div>
+              <div className="pcard-stat-l">{m.l}</div>
+            </div>
+          )}
+        </div>
+      }
       {project.id === "minigolf" && <div className="pcard-demo"><MiniGolfDemo /></div>}
       {project.id === "cfa" && <div className="pcard-demo"><CFADemo /></div>}
       {project.id === "lockedin" && <div className="pcard-demo"><LockedInDemo /></div>}
@@ -307,7 +343,7 @@ function ProjectsSection({ onOpen, playSound }) {
   return (
     <section id="projects" className="section" data-screen-label="Projects">
       <Reveal><div className="section-eyebrow"><span>01</span><span className="section-eyebrow-line" />Selected work</div></Reveal>
-      <Reveal delay={80}><h2 className="section-title">Things I've built.</h2></Reveal>
+      <Reveal delay={80}><h2 className="section-title">Things I've <em className="tx-serif">built</em>.</h2></Reveal>
       <Reveal delay={160}><p className="section-sub">A mix of shipped products and work-in-progress. Click any card to open the case study.</p></Reveal>
 
       <div className="pgrid">
@@ -323,7 +359,7 @@ function SkillsSection() {
   return (
     <section id="skills" className="section" data-screen-label="Skills">
       <Reveal><div className="section-eyebrow"><span>02</span><span className="section-eyebrow-line" />Toolkit</div></Reveal>
-      <Reveal delay={80}><h2 className="section-title">Things I work with.</h2></Reveal>
+      <Reveal delay={80}><h2 className="section-title">Things I work <em className="tx-serif">with</em>.</h2></Reveal>
       <Reveal delay={160}><p className="section-sub">Languages, frameworks, and tools I reach for first, across iOS, web, and backend.</p></Reveal>
 
       <div className="skills-grid">
@@ -386,7 +422,7 @@ function ExperienceSection({ playSound }) {
   return (
     <section id="experience" className="section" data-screen-label="Experience">
       <Reveal><div className="section-eyebrow"><span>03</span><span className="section-eyebrow-line" />Work history</div></Reveal>
-      <Reveal delay={80}><h2 className="section-title">Building software shaped by real-world leadership.</h2></Reveal>
+      <Reveal delay={80}><h2 className="section-title">Building software shaped by real-world <em className="tx-serif">leadership</em>.</h2></Reveal>
       <Reveal delay={160}><p className="section-sub">Four years of leading teams, solving operational problems, and shipping internal tools taught me what great software requires.</p></Reveal>
 
       <div className="xp-list">
@@ -401,10 +437,11 @@ function ExperienceSection({ playSound }) {
 function ContactSection({ playSound }) {
   return (
     <section id="contact" className="section section-contact" data-screen-label="Contact">
+      <Reveal><div className="section-eyebrow"><span>04</span><span className="section-eyebrow-line" />Contact</div></Reveal>
       <div className="contact-card">
         <Reveal delay={80}>
           <h2 className="contact-title">
-            Best way to reach me:
+            Let's build something people <em className="tx-serif">rely on</em>.
           </h2>
         </Reveal>
         <Reveal delay={160}>
@@ -414,6 +451,9 @@ function ContactSection({ playSound }) {
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8m0 0L7 3m4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+            </a>
+            <a className="contact-email" href="mailto:mohammadzayed521@gmail.com" onClick={() => playSound("hover")}>
+              mohammadzayed521@gmail.com
             </a>
           </div>
         </Reveal>
@@ -425,14 +465,19 @@ function ContactSection({ playSound }) {
 function Footer({ playSound }) {
   return (
     <footer className="footer">
-      <div className="footer-l">© 2026 Mohammad Zayed</div>
+      <div className="footer-l">
+        <div>© 2026 Mohammad Zayed</div>
+        <a className="footer-email" href="mailto:mohammadzayed521@gmail.com" onClick={() => playSound("hover")}>
+          mohammadzayed521@gmail.com
+        </a>
+      </div>
       <div className="footer-r">
         {[
         { label: "About", href: "/about" },
         { label: "Writing", href: "/blog" },
         { label: "GitHub", href: "https://github.com/mohammadzayed5" },
         { label: "LinkedIn", href: "https://www.linkedin.com/in/mohammadzayedd/" },
-        { label: "Resume", href: "https://docs.google.com/document/d/1Ohw6ioUVG2cwwxDLZ_h6QjHHe-sMzBdk/edit" }].
+        { label: "Resume", href: "/resume" }].
         map((l) =>
         <a key={l.label} href={l.href} target={l.href.startsWith("http") ? "_blank" : undefined} rel={l.href.startsWith("http") ? "noopener" : undefined} onClick={() => playSound("hover")} className="footer-link">
             {l.label}

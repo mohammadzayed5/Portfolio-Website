@@ -52,10 +52,15 @@ const HTML_FILES = ['index.html'];
 for (const file of HTML_FILES) {
   const path = join(ROOT, file);
   const html = await readFile(path, 'utf-8');
-  const updated = html.replace(
-    /src="\/dist\/([a-z0-9-]+)\.js(?:\?v=[^"]*)?"/g,
-    `src="/dist/$1.js?v=${VERSION}"`,
-  );
+  const updated = html
+    .replace(
+      /src="\/dist\/([a-z0-9-]+)\.js(?:\?v=[^"]*)?"/g,
+      `src="/dist/$1.js?v=${VERSION}"`,
+    )
+    .replace(
+      /href="\/styles\.css(?:\?v=[^"]*)?"/g,
+      `href="/styles.css?v=${VERSION}"`,
+    );
   if (updated !== html) await writeFile(path, updated);
 }
 
