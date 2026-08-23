@@ -314,3 +314,36 @@ for (const p of PROJECTS) {
   console.log(`  projects/${p.id}.html`);
 }
 console.log(`\n✓ Generated ${PROJECTS.length} project pages`);
+
+// Crawlable internal links in index.html.
+//
+// The homepage is client-rendered, so its raw HTML linked to none of the pages
+// above. Search Console showed all four case studies plus /blog as "Discovered
+// - currently not indexed" with Last crawled: N/A, while /about — the one
+// internal page that was linked from the <noscript> fallback — was indexed.
+// Googlebot reads that fallback, so the links belong there. Generated from
+// PROJECTS so they can't drift the way the hand-written "Selected work" line
+// did: it never listed LineReady at all.
+const START = '<!-- crawl-links:start -->';
+const END = '<!-- crawl-links:end -->';
+
+const caseStudies = PROJECTS.map(
+  (p) => `<a href="/projects/${p.id}">${esc(p.name)}</a>`,
+).join(' · ');
+
+const crawlLinks = `    <p>Case studies: ${caseStudies}</p>
+    <p>More: <a href="/about">About</a> · <a href="/blog">Writing</a></p>`;
+
+const indexPath = join(ROOT, 'index.html');
+const indexHtml = await readFile(indexPath, 'utf-8');
+const between = new RegExp(`${START}[\\s\\S]*?${END}`);
+
+if (!between.test(indexHtml)) {
+  throw new Error(`index.html is missing the ${START} / ${END} markers`);
+}
+
+const nextHtml = indexHtml.replace(between, `${START}\n${crawlLinks}\n    ${END}`);
+if (nextHtml !== indexHtml) {
+  await writeFile(indexPath, nextHtml);
+}
+console.log(`✓ Wrote ${PROJECTS.length} crawlable case-study links into index.html`);
