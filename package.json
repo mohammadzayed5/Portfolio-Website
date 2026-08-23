@@ -4,7 +4,7 @@
   "private": true,
   "description": "Mohammad Zayed portfolio site",
   "scripts": {
-    "build": "node build.mjs && node generate-pages.mjs",
+    "build": "node build.mjs && node generate-pages.mjs && node generate-sitemap.mjs",
     "dev": "python3 -m http.server 8000"
   },
   "dependencies": {
