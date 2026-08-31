@@ -41,7 +41,7 @@ const PROJECTS = [
     icon: "store",
     cover: null,
     avatar: "images/CFApic.jpg",
-    short: "Public storefront + private team portal serving a 90-person operator team with dual-surface architecture.",
+    short: "Public storefront + private team portal serving a 40-person operator team with dual-surface architecture.",
     status: "Live",
     color: "#3b82f6",
     liveUrl: "https://cfafoothill.com/",
