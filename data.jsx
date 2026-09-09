@@ -94,13 +94,13 @@ const PROJECTS = [
     approach: [
       "Designed the data model from day one around store-level tenancy: 15+ migrations layer on multi-tenant scoping, and Postgres row-level security policies enforce tenant isolation at the database, not at the API.",
       "Built a role and permission system so directors, shift leads, trainers, and team members all see different actions on the same screen without branching UI code.",
-      "Full internationalization: 1,367 keys per locale across English and Spanish, including dates and numbers. A new hire picks their language on the sign-in screen and every surface follows.",
+      "Full internationalization: 2,085 keys per locale across English and Spanish, including dates and numbers. A new hire picks their language on the sign-in screen and every surface follows.",
       "Wrote the iOS shell in Capacitor over the same React codebase so a single deploy ships to both the App Store and the browser.",
       "Instrumented every screen with PostHog to see real weekly-active numbers, retention cohorts, and the funnels I need when pitching outside operators.",
     ],
     metrics: [
       { v: "77%", l: "weekly active (40 users)" },
-      { v: "1,367", l: "i18n keys / language" },
+      { v: "2,085", l: "i18n keys / language" },
       { v: "iOS + Web", l: "one codebase" },
     ],
     images: [],
