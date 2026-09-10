@@ -84,7 +84,7 @@ const PROJECTS = [
     status: "Live",
     color: "#3b82f6",
     appUrl: "https://apps.apple.com/us/app/lineready/id6789015570",
-    stack: ["React", "TypeScript", "Vite", "Capacitor", "Flask", "Supabase (Postgres RLS)", "PostHog", "i18n"],
+    stack: ["React", "Vite", "Capacitor", "Supabase (Postgres RLS)", "TanStack Query", "Stripe", "PostHog", "i18n"],
     year: "2026",
     role: "Solo, founder of Zayed Software LLC",
     overview:
