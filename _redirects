@@ -1,18 +1,25 @@
 # Netlify Redirects File
 # https://docs.netlify.com/routing/redirects/
 
+# Source-only folders: the repo root is published, so keep these off the web.
+# (twin/ holds the chat's private prompt and knowledge file.)
+/twin/* /index.html 404!
+/netlify/* /index.html 404!
+/design-mocks-nov10/* /index.html 404!
+
 # Resume link points to the PDF checked into the repo (single source of truth).
 /resume /resume.pdf 301!
 
 # Ensure HTTPS
 http://mohammadzayed.com/* https://mohammadzayed.com/:splat 301!
 
-# Pretty URL for the about page
+# Pretty URLs for the about page and the projects index
 /about /about.html 200
+/projects /projects.html 200
 
 # Pretty URL for the writing index (and future individual posts, if added)
-/blog /blog.html 200
-/writing /blog.html 200
+/blog / 302
+/writing / 302
 
 # Pretty URLs for project case studies (generated at build time)
 /projects/:id /projects/:id.html 200

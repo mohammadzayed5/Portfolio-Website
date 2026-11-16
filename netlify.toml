@@ -8,6 +8,11 @@
   # Pre-compile JSX → /dist via esbuild before deploy
   command = "npm run build"
 
+# Serverless functions (the "Ask Mohammad" chat lives at /api/ask)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # Security headers for enhanced protection
 # Do NOT put a global Cache-Control here — Netlify's `/*` matches the root URL `/`
 # too, and pinning every response to 1-year-immutable is what caused stale

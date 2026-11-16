@@ -53,12 +53,12 @@ function lastmodFor(sources) {
   return dates.length ? dates.sort().at(-1) : headDate;
 }
 
-const SHARED = ['data.jsx', 'generate-pages.mjs'];
+const SHARED = ['data.jsx', 'generate-pages.mjs', 'pages.css'];
 
 const PAGES = [
-  { path: '/', sources: ['index.html', 'app.jsx', 'styles.css', 'data.jsx'] },
-  { path: '/about', sources: ['about.html'] },
-  { path: '/blog', sources: ['blog.html'] },
+  { path: '/', sources: ['index.html', 'app.jsx', 'ask.jsx', 'styles.css'] },
+  { path: '/projects', sources: SHARED },
+  { path: '/about', sources: SHARED },
   ...PROJECTS.map((p) => ({ path: `/projects/${p.id}`, sources: SHARED })),
 ];
 

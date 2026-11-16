@@ -4,10 +4,12 @@
   "private": true,
   "description": "Mohammad Zayed portfolio site",
   "scripts": {
-    "build": "node build.mjs && node generate-pages.mjs && node generate-sitemap.mjs",
-    "dev": "python3 -m http.server 8000"
+    "build": "node build.mjs && node build-twin.mjs && node generate-pages.mjs && node generate-sitemap.mjs",
+    "dev": "npm run build && node dev-server.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@netlify/blobs": "^11.1.9",
     "esbuild": "^0.25.0"
   }
 }

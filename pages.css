@@ -1,0 +1,147 @@
+/* Styles for the static pages (Projects, About, case studies).
+   Loaded after styles.css, which supplies the tokens, base rules, top nav and footer. */
+
+.page-bg {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(59,130,246,0.10), transparent 60%),
+    var(--bg);
+}
+body { line-height: 1.6; }
+.page { width: min(920px, 100% - 2 * var(--pad)); margin: 0 auto; padding: 72px 0 40px; }
+.page a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- Page head ---------- */
+.page-eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--fg-mute); margin: 0 0 20px;
+}
+.page-eyebrow a:hover { color: var(--fg); }
+.page-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(40px, 7.4vw, 76px); line-height: 1; letter-spacing: -0.035em;
+  margin: 0 0 24px; text-wrap: balance;
+}
+.page-title em { font-family: var(--font-serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+.page-lede { font-size: clamp(17px, 2vw, 20px); color: var(--fg-mute); max-width: 60ch; margin: 0; }
+.page-lede b { color: var(--fg); font-weight: 500; }
+
+/* ---------- Numbered sections ---------- */
+.sec {
+  display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px 32px;
+  padding: 48px 0; border-top: 1px solid var(--line);
+}
+.page-head + .sec, .facts + .sec, .meta-row + .sec { margin-top: 56px; }
+.sec-label {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--fg-mute); margin: 6px 0 0;
+}
+.sec-label span { color: var(--accent); margin-right: 10px; }
+.sec-body > :first-child { margin-top: 0; }
+.sec-body > :last-child { margin-bottom: 0; }
+.sec-body p { font-size: 16.5px; margin: 0 0 14px; max-width: 64ch; color: #d4d4d8; }
+.sec-body p a, .text-link { color: var(--fg); border-bottom: 1px solid var(--line-2); transition: border-color .2s; }
+.sec-body p a:hover, .text-link:hover { border-color: var(--accent); }
+
+/* ---------- Facts (About) and meta row (case study) ---------- */
+.facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px 32px;
+  margin: 48px 0 0; padding: 0;
+}
+.facts div { border-top: 1px solid var(--line-2); padding-top: 14px; }
+.facts dt {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--fg-mute); margin-bottom: 6px;
+}
+.facts dd { margin: 0; font-size: 15px; }
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 8px 32px; margin-top: 36px;
+  font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.04em; color: var(--fg-mute);
+}
+.meta-row b { color: var(--fg); font-weight: 500; }
+
+/* ---------- Project list ---------- */
+.plist { list-style: none; margin: 64px 0 0; padding: 0; }
+.prow {
+  display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px 24px;
+  padding: 40px 0; border-top: 1px solid var(--line);
+}
+.prow-num { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; color: var(--accent); padding-top: 12px; }
+.prow-head { display: flex; align-items: center; gap: 14px; }
+.prow-head img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+.prow-name {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(26px, 4vw, 38px); line-height: 1.1; letter-spacing: -0.025em; margin: 0;
+}
+.prow-name a { transition: color .2s; }
+.prow-name a:hover { color: #93c5fd; }
+.prow-tag {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--fg-mute); margin: 12px 0 0;
+}
+.prow-short { font-size: 16.5px; color: #d4d4d8; max-width: 62ch; margin: 12px 0 0; }
+.prow-stats { display: flex; flex-wrap: wrap; gap: 12px 36px; margin: 20px 0 0; padding: 0; }
+.prow-stats div { display: flex; flex-direction: column; }
+.prow-stats dt { order: 2; font-size: 12.5px; color: var(--fg-mute); }
+.prow-stats dd { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.prow-links, .link-row { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 20px; font-family: var(--font-mono); font-size: 13px; }
+.prow-links a, .link-row a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--fg-mute); transition: color .2s;
+}
+.prow-links a:first-child { color: var(--fg); }
+.prow-links a:hover, .link-row a:hover { color: var(--fg); }
+
+/* ---------- Experience ---------- */
+.xp { list-style: none; margin: 0; padding: 0; display: grid; gap: 30px; }
+.xp-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 20px; }
+.xp-role { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.xp-role span { color: var(--fg-mute); font-weight: 400; }
+.xp-period { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; color: var(--fg-mute); }
+.xp ul, .approach { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.xp ul li, .approach li { position: relative; padding-left: 20px; font-size: 15.5px; color: #d4d4d8; max-width: 64ch; }
+.xp ul li::before, .approach li::before {
+  content: ""; position: absolute; left: 0; top: 0.72em;
+  width: 8px; height: 1px; background: var(--accent);
+}
+.approach { margin-top: 0; gap: 12px; }
+.approach li { font-size: 16.5px; }
+
+/* ---------- Skills ---------- */
+.skills { margin: 0; display: grid; gap: 18px; }
+.skills div { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 4px 20px; }
+.skills dt { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-mute); padding-top: 3px; }
+.skills dd { margin: 0; font-size: 15.5px; color: #d4d4d8; }
+
+/* ---------- Quick answers ---------- */
+.faq { margin: 0; display: grid; gap: 22px; }
+.faq dt { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+.faq dd { margin: 0; font-size: 15.5px; color: #d4d4d8; max-width: 64ch; }
+
+/* ---------- Case study ---------- */
+.project-tag { font-family: var(--font-serif); font-style: italic; font-size: clamp(19px, 2.2vw, 24px); color: var(--fg-mute); margin: 0; }
+.metrics { display: flex; flex-wrap: wrap; gap: 20px 48px; margin: 0; padding: 0; }
+.metrics div { display: flex; flex-direction: column; }
+.metrics dt { order: 2; font-size: 13px; color: var(--fg-mute); }
+.metrics dd { margin: 0; font-family: var(--font-display); font-size: clamp(24px, 3.4vw, 34px); font-weight: 700; letter-spacing: -0.02em; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.gallery img { width: 100%; height: auto; display: block; border: 1px solid var(--line-2); border-radius: 12px; background: var(--bg-2); }
+.stack { font-size: 15.5px; color: #d4d4d8; }
+.back-link {
+  display: inline-flex; align-items: center; min-height: 44px; margin-top: 40px;
+  font-family: var(--font-mono); font-size: 13px; color: var(--fg-mute); transition: color .2s;
+}
+.back-link:hover { color: var(--fg); }
+
+/* The shared footer sits closer on these pages than on the chat home. */
+.page ~ .footer { width: min(920px, 100% - 2 * var(--pad)); max-width: none; padding-left: 0; padding-right: 0; margin-top: 40px; }
+
+@media (max-width: 700px) {
+  .page { padding-top: 44px; }
+  .sec { grid-template-columns: 1fr; padding: 36px 0; }
+  .page-head + .sec, .facts + .sec, .meta-row + .sec { margin-top: 40px; }
+  .prow { grid-template-columns: 1fr; padding: 32px 0; }
+  .prow-num { padding-top: 0; }
+  .plist { margin-top: 44px; }
+  .skills div { grid-template-columns: 1fr; }
+}

@@ -56,3 +56,16 @@ node_modules/
 
 # Optional: Lighthouse reports
 reports/
+
+# Generated at build time from twin/*.md
+netlify/functions/ask/prompt.generated.mjs
+
+# Design mock references (not part of the site)
+design-mocks-nov10/
+
+# Personal to-do list (not part of the site)
+TODO-mohammad.md
+
+# Raw phone recordings (the site uses the small portrait-*.mp4 cuts)
+assets/*.MOV
+assets/*.mov

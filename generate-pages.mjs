@@ -1,4 +1,5 @@
-// Generates static case-study pages at /projects/<id>.html from data.jsx.
+// Generates the static pages from data.jsx: /projects, /about and one case study
+// per project at /projects/<id>.html. They share one layout (nav, footer, CSS).
 // data.jsx is pure JS data assigned to window globals, so we eval it with a stub.
 
 import { readFile, mkdir, writeFile } from 'fs/promises';
@@ -39,23 +40,46 @@ function externalLinks(p) {
   return links;
 }
 
-function render(p) {
-  const url = `${SITE}/projects/${p.id}`;
-  const title = `${p.name} | Mohammad Zayed`;
-  const desc = metaDescription(p);
-  const ogImage = p.images?.[0] ? `${SITE}/${p.images[0]}` : `${SITE}/assets/headshot.jpg`;
-  const links = externalLinks(p);
+const EMAIL = 'mohammadzayed521@gmail.com';
+const LINKEDIN = 'https://www.linkedin.com/in/mohammadzayedd/';
+const GITHUB = 'https://github.com/mohammadzayed5';
+const STATUS = 'Open to full-time · May 2027';
 
-  const breadcrumb = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
-      { '@type': 'ListItem', position: 2, name: 'Projects', item: `${SITE}/#projects` },
-      { '@type': 'ListItem', position: 3, name: p.name, item: url },
-    ],
-  }, null, 2);
+// Reuse the cache-busting version build.mjs stamped into index.html.
+const indexSource = await readFile(join(ROOT, 'index.html'), 'utf-8');
+const VERSION = indexSource.match(/styles\.css\?v=([^"]+)"/)?.[1] ?? '';
+const v = VERSION ? `?v=${VERSION}` : '';
 
+const PERSON = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Mohammad Zayed',
+  givenName: 'Mohammad',
+  familyName: 'Zayed',
+  url: SITE,
+  image: `${SITE}/assets/headshot.jpg`,
+  jobTitle: 'Software Engineer',
+  description:
+    'Full-stack software engineer who built LineReady, the app his Chick-fil-A runs on. Graduating from Cal State Long Beach in May 2027 and open to full-time roles.',
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'California State University, Long Beach', sameAs: 'https://www.csulb.edu/' },
+  address: { '@type': 'PostalAddress', addressRegion: 'CA', addressCountry: 'US' },
+  sameAs: [GITHUB, LINKEDIN],
+};
+
+const crumbs = (...items) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [['Home', `${SITE}/`], ...items].map(([name, item], i) => ({
+    '@type': 'ListItem', position: i + 1, name, item,
+  })),
+});
+
+/** Shared shell: head, top nav (same as the home page), footer. */
+function layout({ path, title, desc, ogType = 'website', ogImage, jsonLd = [], active, body }) {
+  const url = `${SITE}${path}`;
+  const image = ogImage || `${SITE}/assets/headshot.jpg`;
+  const link = (href, label, key) =>
+    `<a href="${href}" class="topnav-link${active === key ? ' is-active' : ''}"${active === key ? ' aria-current="page"' : ''}>${label}</a>`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,247 +97,250 @@ function render(p) {
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-<meta property="og:type" content="article" />
+<meta property="og:type" content="${ogType}" />
 <meta property="og:url" content="${url}" />
 <meta property="og:title" content="${attr(title)}" />
 <meta property="og:description" content="${attr(desc)}" />
-<meta property="og:image" content="${ogImage}" />
+<meta property="og:image" content="${image}" />
 <meta property="og:site_name" content="Mohammad Zayed" />
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:url" content="${url}" />
 <meta name="twitter:title" content="${attr(title)}" />
 <meta name="twitter:description" content="${attr(desc)}" />
-<meta name="twitter:image" content="${ogImage}" />
+<meta name="twitter:image" content="${image}" />
 
-<script type="application/ld+json">
-${breadcrumb}
-</script>
+${jsonLd.map((j) => `<script type="application/ld+json">\n${JSON.stringify(j, null, 2)}\n</script>`).join('\n')}
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 
-<style>
-:root {
-  --bg: #0a0a0a; --bg-2: #0d0d10; --bg-3: #111114;
-  --fg: #f5f6f8; --fg-mute: #a1a1aa; --fg-faint: #52525b;
-  --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.14);
-  --accent: #3b82f6; --accent-soft: rgba(59,130,246,0.15); --accent-glow: rgba(59,130,246,0.25);
-  --font-display: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-serif: "Instrument Serif", Georgia, serif;
-  --container: 880px; --pad: clamp(20px, 4vw, 48px);
-}
-* { box-sizing: border-box; }
-html, body { background: var(--bg); color: var(--fg); margin: 0; }
-body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; line-height: 1.6; }
-a { color: inherit; text-decoration: none; }
-::selection { background: var(--accent-soft); color: var(--fg); }
-.page-bg {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(ellipse at 50% -10%, rgba(59,130,246,0.10), transparent 60%),
-    radial-gradient(ellipse at 80% 100%, rgba(59,130,246,0.06), transparent 50%),
-    var(--bg);
-}
-.site-header {
-  position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 22px var(--pad);
-  background: linear-gradient(to bottom, rgba(10,10,10,.92), rgba(10,10,10,.55));
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
-}
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 17px; }
-.brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
-.header-links { display: flex; gap: 28px; font-family: var(--font-display); font-size: 14px; font-weight: 500; color: var(--fg-mute); }
-.header-links a { transition: color .2s; }
-.header-links a:hover { color: var(--fg); }
-main { max-width: var(--container); margin: 0 auto; padding: 64px var(--pad) 96px; }
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 12px;
-  font-family: var(--font-display); font-size: 12px; font-weight: 500;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-mute); margin-bottom: 18px;
-}
-.eyebrow-line { height: 1px; width: 32px; background: var(--line-2); }
-.status-pill {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--font-display); font-size: 12px; font-weight: 600;
-  padding: 5px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg-2);
-}
-.status-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
-h1.project-title {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5.5vw, 58px);
-  line-height: 1.05; letter-spacing: -0.02em; font-weight: 700; margin: 14px 0 10px;
-}
-.project-tag { font-family: var(--font-serif); font-size: clamp(18px, 2vw, 23px); color: var(--fg-mute); margin: 0 0 28px; }
-.meta-row {
-  display: flex; flex-wrap: wrap; gap: 10px 28px;
-  font-family: var(--font-display); font-size: 14px; color: var(--fg-mute);
-  padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  margin-bottom: 44px;
-}
-.meta-row b { color: var(--fg); font-weight: 600; }
-section.cs { margin-bottom: 52px; }
-section.cs h2 {
-  font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px);
-  letter-spacing: -0.01em; font-weight: 600; margin: 0 0 16px;
-}
-section.cs p { font-size: 16.5px; margin: 0 0 14px; max-width: 66ch; }
-.approach-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.approach-list li {
-  position: relative; padding: 16px 20px 16px 44px;
-  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; font-size: 15.5px;
-}
-.approach-list li::before {
-  content: ""; position: absolute; left: 20px; top: 24px;
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 8px var(--accent-glow);
-}
-.metrics {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-  background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
-}
-.metric { background: var(--bg-2); padding: 24px; text-align: center; }
-.metric-v { font-family: var(--font-display); font-size: clamp(24px, 3.4vw, 36px); font-weight: 700; color: var(--accent); }
-.metric-l { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-mute); margin-top: 6px; }
-@media (max-width: 560px) { .metrics { grid-template-columns: 1fr; } }
-.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-.gallery img {
-  width: 100%; height: auto; display: block;
-  border: 1px solid var(--line-2); border-radius: 12px; background: var(--bg-2);
-}
-.tech-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.tech-pills span {
-  font-family: var(--font-display); font-size: 13px; font-weight: 500;
-  padding: 6px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg-2);
-}
-.links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-.link-card {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 22px; border: 1px solid var(--line-2); border-radius: 14px; background: var(--bg-2);
-  transition: border-color .2s, transform .2s; font-family: var(--font-display);
-}
-.link-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-.link-card .label { font-weight: 600; font-size: 15px; }
-.link-card .value { font-size: 13px; color: var(--fg-mute); }
-.link-card .arrow { color: var(--accent); }
-.cta-back {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 22px; border: 1px solid var(--line-2); border-radius: 999px;
-  font-family: var(--font-display); font-size: 14px; font-weight: 500;
-  background: rgba(255,255,255,.02); transition: all .25s; margin-top: 8px;
-}
-.cta-back:hover { border-color: var(--accent); background: var(--accent-soft); }
-footer.site-footer {
-  border-top: 1px solid var(--line); padding: 24px var(--pad);
-  display: flex; justify-content: space-between; align-items: center;
-  color: var(--fg-mute); font-size: 13px; font-family: var(--font-display);
-}
-footer.site-footer a:hover { color: var(--fg); }
-.footer-links { display: flex; gap: 20px; }
-</style>
+<link rel="stylesheet" href="/styles.css${v}" />
+<link rel="stylesheet" href="/pages.css${v}" />
 
 <script data-goatcounter="https://mohammadzayed.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div class="page-bg" aria-hidden="true"></div>
 
-<header class="site-header">
-  <a href="/" class="brand"><span class="brand-dot"></span>Mohammad Zayed</a>
-  <nav class="header-links" aria-label="Primary">
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-    <a href="/#projects">Projects</a>
-    <a href="/blog">Writing</a>
-    <a href="/#contact">Contact</a>
-  </nav>
-</header>
-
-<main>
-  <div class="eyebrow"><span>Case study</span><span class="eyebrow-line" aria-hidden="true"></span><span>${esc(p.year)}</span></div>
-  ${p.status ? `<span class="status-pill"><span class="status-pill-dot"></span>${esc(p.status)}</span>` : ''}
-  <h1 class="project-title">${esc(p.name)}</h1>
-  <p class="project-tag">${esc(p.tag)}</p>
-
-  <div class="meta-row">
-    <span><b>Role</b> · ${esc(p.role)}</span>
-    <span><b>Year</b> · ${esc(p.year)}</span>
+<nav class="topnav" aria-label="Main">
+  <div class="topnav-links">
+    ${link('/', 'HOME', 'home')}
+    ${link('/projects', 'PROJECTS', 'projects')}
+    ${link('/about', 'ABOUT', 'about')}
+    <a href="/resume" class="topnav-link" target="_blank" rel="noopener noreferrer">RESUME</a>
   </div>
+  <span class="topnav-status"><span class="topnav-status-dot" aria-hidden="true"></span>${STATUS}</span>
+</nav>
 
-  <section class="cs">
-    <h2>Overview</h2>
-    <p>${esc(p.overview)}</p>
-  </section>
-
-  <section class="cs">
-    <h2>The problem</h2>
-    <p>${esc(p.problem)}</p>
-  </section>
-
-  <section class="cs">
-    <h2>Approach</h2>
-    <ul class="approach-list">
-      ${(p.approach || []).map((a) => `<li>${esc(a)}</li>`).join('\n      ')}
-    </ul>
-  </section>
-
-  ${(p.metrics || []).length ? `<section class="cs">
-    <h2>By the numbers</h2>
-    <div class="metrics">
-      ${p.metrics.map((m) => `<div class="metric"><div class="metric-v">${esc(m.v)}</div><div class="metric-l">${esc(m.l)}</div></div>`).join('\n      ')}
-    </div>
-  </section>` : ''}
-
-  ${(p.images || []).length ? `<section class="cs">
-    <h2>Screenshots</h2>
-    <div class="gallery">
-      ${p.images.map((img) => `<img src="/${attr(img)}" alt="${attr(p.name)} screenshot" loading="lazy" decoding="async" />`).join('\n      ')}
-    </div>
-  </section>` : ''}
-
-  <section class="cs">
-    <h2>Built with</h2>
-    <div class="tech-pills">
-      ${(p.stack || []).map((s) => `<span>${esc(s)}</span>`).join('\n      ')}
-    </div>
-  </section>
-
-  ${links.length ? `<section class="cs">
-    <h2>Links</h2>
-    <div class="links-grid">
-      ${links.map((l) => `<a class="link-card" href="${attr(l.href)}" target="_blank" rel="noopener">
-        <div><div class="label">${esc(l.label)}</div><div class="value">${esc(l.value)}</div></div>
-        <span class="arrow" aria-hidden="true">&#8599;</span>
-      </a>`).join('\n      ')}
-    </div>
-  </section>` : ''}
-
-  <a class="cta-back" href="/#projects">&larr; All projects</a>
+<main class="page">
+${body}
 </main>
 
-<footer class="site-footer">
-  <div>&copy; 2026 Mohammad Zayed</div>
-  <nav class="footer-links" aria-label="Footer">
-    <a href="https://github.com/mohammadzayed5" rel="me noopener" target="_blank">GitHub</a>
-    <a href="https://www.linkedin.com/in/mohammadzayedd/" rel="me noopener" target="_blank">LinkedIn</a>
-    <a href="/resume">Resume</a>
-  </nav>
+<footer class="footer">
+  <div class="footer-l">
+    <div>&copy; 2026 Mohammad Zayed</div>
+    <a class="footer-email" href="mailto:${EMAIL}">${EMAIL}</a>
+  </div>
+  <div class="footer-r">
+    <a class="footer-link" href="${LINKEDIN}" rel="me noopener" target="_blank">LinkedIn</a>
+    <a class="footer-link" href="${GITHUB}" rel="me noopener" target="_blank">GitHub</a>
+    <a class="footer-link" href="/resume">Resume</a>
+  </div>
 </footer>
+<script src="/track.js${v}" defer></script>
 </body>
 </html>
 `;
 }
 
+let secN = 0;
+const sec = (label, inner) => `  <section class="sec">
+    <h2 class="sec-label"><span>${String(++secN).padStart(2, '0')}</span>${esc(label)}</h2>
+    <div class="sec-body">
+${inner}
+    </div>
+  </section>`;
+
+const stats = (cls, metrics) => `<dl class="${cls}">
+        ${metrics.map((m) => `<div><dt>${esc(m.l)}</dt><dd>${esc(m.v)}</dd></div>`).join('\n        ')}
+      </dl>`;
+
+function renderCaseStudy(p) {
+  secN = 0;
+  const links = externalLinks(p);
+  const body = `  <header class="page-head">
+    <p class="page-eyebrow"><a href="/projects">Projects</a> / How I built it</p>
+    <h1 class="page-title">${esc(p.name)}</h1>
+    <p class="project-tag">${esc(p.tag)}</p>
+    <div class="meta-row">
+      <span><b>Role</b> ${esc(p.role)}</span>${p.year ? `\n      <span><b>Year</b> ${esc(p.year)}</span>` : ''}
+    </div>
+  </header>
+
+${[
+    sec('Overview', `      <p>${esc(p.overview)}</p>`),
+    sec('The problem', `      <p>${esc(p.problem)}</p>`),
+    sec('Approach', `      <ul class="approach">
+        ${(p.approach || []).map((a) => `<li>${esc(a)}</li>`).join('\n        ')}
+      </ul>`),
+    (p.metrics || []).length ? sec('By the numbers', `      ${stats('metrics', p.metrics)}`) : '',
+    (p.images || []).length ? sec('Screenshots', `      <div class="gallery">
+        ${p.images.map((img) => `<img src="/${attr(img)}" alt="${attr(p.name)} screenshot" loading="lazy" decoding="async" />`).join('\n        ')}
+      </div>`) : '',
+    sec('Built with', `      <p class="stack">${(p.stack || []).map(esc).join(' · ')}</p>`),
+    links.length ? sec('Links', `      <div class="link-row" style="margin-top:-10px">
+        ${links.map((l) => `<a href="${attr(l.href)}" target="_blank" rel="noopener">${esc(l.label)} &#8599;</a>`).join('\n        ')}
+      </div>`) : '',
+  ].filter(Boolean).join('\n\n')}
+
+  <a class="back-link" href="/projects">&larr; All projects</a>`;
+
+  return layout({
+    path: `/projects/${p.id}`,
+    title: `${p.name} | Mohammad Zayed`,
+    desc: metaDescription(p),
+    ogType: 'article',
+    ogImage: p.images?.[0] ? `${SITE}/${p.images[0]}` : undefined,
+    jsonLd: [crumbs(['Projects', `${SITE}/projects`], [p.name, `${SITE}/projects/${p.id}`])],
+    active: 'projects',
+    body,
+  });
+}
+
+function renderProjects() {
+  const rows = PROJECTS.map((p, i) => {
+    const links = externalLinks(p);
+    return `    <li class="prow">
+      <div class="prow-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</div>
+      <div>
+        <div class="prow-head">
+          ${p.avatar ? `<img src="/${attr(p.avatar)}" alt="" width="40" height="40" loading="lazy" decoding="async" />` : ''}
+          <h2 class="prow-name"><a href="/projects/${p.id}">${esc(p.name)}</a></h2>
+        </div>
+        <p class="prow-tag">${esc(p.tag)}</p>
+        <p class="prow-short">${esc(p.short)}</p>
+        ${(p.metrics || []).length ? stats('prow-stats', p.metrics) : ''}
+        <div class="prow-links">
+          <a href="/projects/${p.id}">How I built it &rarr;</a>
+          ${links.map((l) => `<a href="${attr(l.href)}" target="_blank" rel="noopener">${esc(l.label)} &#8599;</a>`).join('\n          ')}
+        </div>
+      </div>
+    </li>`;
+  }).join('\n');
+
+  const body = `  <header class="page-head">
+    <p class="page-eyebrow">Projects</p>
+    <h1 class="page-title">Things I built and <em>shipped</em>.</h1>
+    <p class="page-lede">Four projects, all built solo. The first one runs my store.</p>
+  </header>
+
+  <ol class="plist">
+${rows}
+  </ol>`;
+
+  return layout({
+    path: '/projects',
+    title: 'Projects | Mohammad Zayed',
+    desc: 'Software projects by Mohammad Zayed: LineReady, the app his Chick-fil-A runs on, LockedIn, Mini Golf Score Tracker and the Chick-fil-A Foothill Ranch website.',
+    jsonLd: [
+      crumbs(['Projects', `${SITE}/projects`]),
+      {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        itemListElement: PROJECTS.map((p, i) => ({
+          '@type': 'ListItem', position: i + 1, name: p.name, url: `${SITE}/projects/${p.id}`,
+        })),
+      },
+    ],
+    active: 'projects',
+    body,
+  });
+}
+
+const FAQ = [
+  ['What does Mohammad Zayed do?', "I'm a Director at the Chick-fil-A in Foothill Ranch, California, and I write the software my store runs on. I'm also finishing a B.S. in Computer Science at Cal State Long Beach."],
+  ['What has Mohammad Zayed built?', "Four projects, all solo: LineReady, the restaurant operations platform my store runs on; LockedIn, a nutrition and GLP-1 tracker; Mini Golf Score Tracker; and my store's website and team portal."],
+  ['When does Mohammad Zayed graduate?', 'May 2027, with a B.S. in Computer Science from California State University, Long Beach.'],
+  ['What roles is Mohammad Zayed looking for?', "Full-time software engineering roles starting after I graduate in May 2027. I don't need visa sponsorship and I'll relocate."],
+  ['How do I contact Mohammad Zayed?', 'LinkedIn is the fastest way. My email and GitHub are at the bottom of this page.'],
+];
+const FAQ_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+};
+
+function renderAbout() {
+  secN = 0;
+  const EXPERIENCE = window.EXPERIENCE || [];
+  const SKILL_GROUPS = window.SKILL_GROUPS || [];
+
+  const body = `  <header class="page-head">
+    <p class="page-eyebrow">About</p>
+    <h1 class="page-title">I'm Mohammad <em>Zayed</em>.</h1>
+    <p class="page-lede">I'm a Director at the Chick-fil-A in Foothill Ranch, California, and I write the software my store runs on. I'm finishing a B.S. in Computer Science at Cal State Long Beach and I graduate in May 2027.</p>
+  </header>
+
+  <dl class="facts">
+    <div><dt>Based in</dt><dd>Orange County, California</dd></div>
+    <div><dt>Education</dt><dd>B.S. Computer Science, CSULB, May 2027</dd></div>
+    <div><dt>Looking for</dt><dd>Full-time software engineering roles</dd></div>
+    <div><dt>Logistics</dt><dd>No visa sponsorship needed. I'll relocate.</dd></div>
+  </dl>
+
+${[
+    sec('Background', `      <p>I started at the store in March 2022 as a Team Member, became a Shift Lead in June 2023, and have been a Director since June 2024. I've been programming for about 5 years.</p>
+      <p>I run daily operations on software I built myself, so I'm my own first user. <a href="/projects/lineready">LineReady</a> started because I was running shifts and watching information get lost in group chats. I built it for the people I work next to, and I hear what's broken from the people using it.</p>
+      <p>In July 2026 I founded Zayed Software LLC to hold the apps I build. The rest of my work is on the <a href="/projects">projects page</a>.</p>`),
+    sec('Experience', `      <ol class="xp">
+        ${EXPERIENCE.map((e) => `<li>
+          <div class="xp-top">
+            <h3 class="xp-role">${esc(e.role)} <span>· ${esc(e.org.replace(' · ', ', '))}</span></h3>
+            <span class="xp-period">${esc(e.period)}</span>
+          </div>${e.bullets.length ? `
+          <ul>
+            ${e.bullets.map((b) => `<li>${esc(b)}</li>`).join('\n            ')}
+          </ul>` : ''}
+        </li>`).join('\n        ')}
+      </ol>`),
+    sec('Skills', `      <dl class="skills">
+        ${SKILL_GROUPS.map((g) => `<div><dt>${esc(g.label)}</dt><dd>${g.items.map(esc).join(', ')}</dd></div>`).join('\n        ')}
+      </dl>`),
+    sec('Education', `      <p>B.S. in Computer Science, California State University, Long Beach. I graduate in May 2027.</p>`),
+    sec('Quick answers', `      <dl class="faq">
+        ${FAQ.map(([q, a]) => `<div><dt>${esc(q)}</dt><dd>${esc(a)}</dd></div>`).join('\n        ')}
+      </dl>`),
+    sec('Contact', `      <p>LinkedIn is the fastest way to reach me.</p>
+      <div class="link-row" style="margin-top:0">
+        <a href="${LINKEDIN}" rel="me noopener" target="_blank">LinkedIn &#8599;</a>
+        <a href="mailto:${EMAIL}">Email &#8599;</a>
+        <a href="${GITHUB}" rel="me noopener" target="_blank">GitHub &#8599;</a>
+        <a href="/resume">Resume &#8599;</a>
+      </div>`),
+  ].join('\n\n')}`;
+
+  return layout({
+    path: '/about',
+    title: 'About Mohammad Zayed | Software Engineer',
+    desc: 'About Mohammad Zayed: a Director at a Chick-fil-A who writes the software his store runs on. B.S. Computer Science, Cal State Long Beach, graduating May 2027. Open to full-time software engineering roles.',
+    ogType: 'profile',
+    jsonLd: [PERSON, crumbs(['About', `${SITE}/about`]), FAQ_LD],
+    active: 'about',
+    body,
+  });
+}
+
 await mkdir(OUT, { recursive: true });
 for (const p of PROJECTS) {
-  const file = join(OUT, `${p.id}.html`);
-  await writeFile(file, render(p));
+  await writeFile(join(OUT, `${p.id}.html`), renderCaseStudy(p));
   console.log(`  projects/${p.id}.html`);
 }
-console.log(`\n✓ Generated ${PROJECTS.length} project pages`);
+await writeFile(join(ROOT, 'projects.html'), renderProjects());
+await writeFile(join(ROOT, 'about.html'), renderAbout());
+console.log(`  projects.html\n  about.html`);
+console.log(`\n✓ Generated ${PROJECTS.length} project pages, the projects index and the about page`);
 
 // Crawlable internal links in index.html.
 //
@@ -332,10 +359,10 @@ const caseStudies = PROJECTS.map(
 ).join(' · ');
 
 const crawlLinks = `    <p>Case studies: ${caseStudies}</p>
-    <p>More: <a href="/about">About</a> · <a href="/blog">Writing</a></p>`;
+    <p>More: <a href="/projects">Projects</a> · <a href="/about">About</a> · <a href="/resume">Resume</a></p>`;
 
 const indexPath = join(ROOT, 'index.html');
-const indexHtml = await readFile(indexPath, 'utf-8');
+const indexHtml = indexSource;
 const between = new RegExp(`${START}[\\s\\S]*?${END}`);
 
 if (!between.test(indexHtml)) {

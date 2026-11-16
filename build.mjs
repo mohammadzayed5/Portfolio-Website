@@ -10,15 +10,9 @@ import { execSync } from 'child_process';
 const ROOT = new URL('.', import.meta.url).pathname;
 const OUT = join(ROOT, 'dist');
 
-// Files to transpile, in dependency order (matches index.html script order)
+// Files the home page loads, in dependency order (matches index.html script order)
 const FILES = [
-  'tweaks-panel.jsx',
-  'utils.jsx',
-  'tech-icons.jsx',
-  'particles.jsx',
-  'data.jsx',
-  'live-demos.jsx',
-  'case-study.jsx',
+  'ask.jsx',
   'app.jsx',
 ];
 

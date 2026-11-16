@@ -1,0 +1,617 @@
+/* Chat-first home: "Ask Mohammad". Talks to the Netlify Function at /api/ask. */
+
+// Only the most recent exchanges are sent back as context, so a long
+// conversation costs about the same per question as a short one.
+const ASK_HISTORY_TURNS = 6;
+const ASK_MAX_CHARS = 500;
+
+// Suggested questions, three at a time. The refresh button deals the next three.
+const ASK_PROMPTS = [
+  "What did you build for Chick-fil-A?",
+  "What roles are you looking for?",
+  "Which project are you proudest of?",
+  "Show me LockedIn",
+  "What's your background?",
+  "Where can I try your apps?",
+  "Tell me about the security hole you closed",
+  "How did you speed up food search?",
+  "What's your stack?",
+  "How do I reach you?",
+];
+const ASK_PROMPTS_SHOWN = 3;
+
+const ASK_CASES = {
+  "case:lineready": { id: "lineready", name: "LineReady", img: "images/LineReadyLogo.png", logo: true },
+  "case:lockedin": { id: "lockedin", name: "LockedIn", img: "assets/LockedinDashboard.png" },
+  "case:minigolf": { id: "minigolf", name: "Mini Golf", img: "assets/golf-home.png" },
+  "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", img: "assets/CFAWebsiteHome.png" },
+};
+
+const ASK_MARKER_RE = /\[\[(case:[a-z-]+|resume|contact|lead)\]\]/g;
+
+const ASK_NOTES = {
+  closed: "I can't answer right now. The real me can.",
+  rate: "That's a lot of questions at once. Give it a minute and try again.",
+  refusal: "That one's outside my lane. I'm better at talking about what I've built.",
+};
+
+/** Splits a raw answer into visible paragraphs and the buttons it asked for. */
+function parseAnswer(raw, streaming) {
+  const markers = [];
+  let text = raw.replace(ASK_MARKER_RE, (_, m) => {
+    if (!markers.includes(m)) markers.push(m);
+    return "";
+  });
+  // While streaming, hide a marker that has only partly arrived.
+  if (streaming) text = text.replace(/\[+[a-z:-]*\]?$/, "");
+  const paragraphs = text.trim().split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  return { paragraphs, markers };
+}
+
+function askSessionId() {
+  try {
+    let id = sessionStorage.getItem("ask.sid");
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem("ask.sid", id);
+    }
+    return id;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
+
+function jumpToContact() {
+  document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* Shared with the portrait so it livens up while an answer is streaming. */
+const ASK_LIVE = { speaking: false };
+
+// Density ramp (dark to bright), then four stroke glyphs used along edges.
+const GLYPHS = " .·:;-=+*xX#%&@" + "|/-\\";
+const GLYPH_RAMP = 15;
+const GLYPH_LEVELS = 12;
+
+/* A short video of me, cut out of its backdrop and redrawn in characters, so
+   the chat reads as a conversation with an AI version of me. An idle loop
+   plays normally and a talking loop plays while an answer is streaming.
+   Each cell gets a tone (how bright) and a glyph: flat areas use the density
+   ramp, edges (jaw, brows, eyes, collar, outline) use a stroke that follows
+   the edge direction. That is what makes a face read at this size.
+   A still frame stands in until a video is playing, and for reduced motion. */
+function GlyphPortrait() {
+  const ref = React.useRef(null);
+  const idleRef = React.useRef(null);
+  const talkRef = React.useRef(null);
+  React.useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = "/assets/portrait.jpg";
+    const idle = idleRef.current;
+    const talk = talkRef.current;
+
+    let grid = null;
+    let raf = 0;
+    let last = 0;
+    let born = 0;
+    let fontReady = false;
+
+    // Open just before the smile in the idle loop, so that is the first thing a visitor sees.
+    const IDLE_START = 4.0;
+    const cue = () => { try { idle.currentTime = IDLE_START; } catch {} };
+    if (idle && !still) {
+      if (idle.readyState >= 1) cue();
+      else idle.addEventListener("loadedmetadata", cue, { once: true });
+    }
+
+    const playing = (v) => v && v.readyState >= 2 && !v.paused;
+    const play = (v) => { if (v && v.paused) v.play().catch(() => {}); };
+
+    // Cell layout, work buffers and the glyph sprite sheet. Redone on resize.
+    const layout = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if (!w || !h) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Whole device pixels per cell, so the glyph sprites tile without seams.
+      const cwD = Math.max(3, Math.round((w / 118) * dpr));
+      const chD = Math.round(cwD * 1.55);
+      const cols = Math.floor((w * dpr) / cwD);
+      const rows = Math.floor((h * dpr) / chD);
+      const n = cols * rows;
+
+      const sample = document.createElement("canvas");
+      sample.width = cols;
+      sample.height = rows;
+      const sctx = sample.getContext("2d", { willReadFrequently: true });
+      sctx.imageSmoothingQuality = "high";
+
+      const phase = new Float32Array(n);
+      for (let i = 0; i < n; i++) phase[i] = Math.random() * Math.PI * 2;
+
+      // Sprite sheet: every glyph at every brightness, drawn once.
+      const atlas = document.createElement("canvas");
+      atlas.width = GLYPHS.length * cwD;
+      atlas.height = GLYPH_LEVELS * chD;
+      const actx = atlas.getContext("2d");
+      actx.font = `600 ${(chD * 1.02).toFixed(1)}px "JetBrains Mono", ui-monospace, monospace`;
+      actx.textBaseline = "middle";
+      actx.textAlign = "center";
+      for (let lv = 0; lv < GLYPH_LEVELS; lv++) {
+        const v = lv / (GLYPH_LEVELS - 1);
+        const alpha = 0.22 + 0.78 * Math.pow(v, 0.8);
+        actx.fillStyle = `rgba(${Math.round(64 + 176 * v * v)},${Math.round(134 + 110 * v)},${Math.round(246 + 9 * v)},${alpha.toFixed(2)})`;
+        for (let g = 1; g < GLYPHS.length; g++) {
+          actx.fillText(GLYPHS[g], g * cwD + cwD / 2, lv * chD + chD / 2);
+        }
+      }
+
+      canvas.width = cols * cwD;
+      canvas.height = rows * chD;
+      grid = {
+        cols, rows, n, cwD, chD, sctx, phase, atlas, ready: false,
+        wall: new Uint8Array(n), mask: new Float32Array(n), lum: new Float32Array(n),
+        sharp: new Float32Array(n), tone: new Float32Array(n), glyph: new Int8Array(n),
+        stack: new Int32Array(n), hist: new Uint32Array(64), lo: -1, hi: -1,
+      };
+    };
+
+    // Turn one frame (video or still) into tones and glyphs.
+    const analyze = (source, sw, sh) => {
+      const { cols, rows, n, sctx, wall, mask, lum, sharp, tone, glyph, stack, hist } = grid;
+      // Fill the grid, cropping the source to the grid's shape from the top centre.
+      const want = (cols * grid.cwD) / (rows * grid.chD);
+      let cw = sw, ch = sh;
+      if (sw / sh > want) cw = sh * want; else ch = sw / want;
+      sctx.drawImage(source, (sw - cw) / 2, 0, cw, ch, 0, 0, cols, rows);
+      let data;
+      try {
+        data = sctx.getImageData(0, 0, cols, rows).data;
+      } catch {
+        return false;
+      }
+
+      // 1. Brightness, and which cells look like the wall: bright and nearly colourless.
+      for (let i = 0; i < n; i++) {
+        const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        lum[i] = (0.45 * r + 0.45 * g + 0.1 * b) / 255;
+        wall[i] = mn > 138 && mx - mn < 34 ? 1 : 0;
+      }
+      // Only wall that connects to the top or side edges is backdrop, so
+      // eye whites and teeth stay part of the face.
+      let top = 0;
+      const seed = (i) => { if (wall[i] === 1) { wall[i] = 2; stack[top++] = i; } };
+      for (let x = 0; x < cols; x++) seed(x);
+      for (let y = 0; y < rows; y++) { seed(y * cols); seed(y * cols + cols - 1); }
+      while (top) {
+        const i = stack[--top];
+        const x = i % cols;
+        if (x > 0) seed(i - 1);
+        if (x < cols - 1) seed(i + 1);
+        if (i >= cols) seed(i - cols);
+        if (i < n - cols) seed(i + cols);
+      }
+      const at = (arr, x, y) => arr[Math.min(rows - 1, Math.max(0, y)) * cols + Math.min(cols - 1, Math.max(0, x))];
+      // Soften the cut-out by averaging over the neighbouring cells.
+      hist.fill(0);
+      let count = 0;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          let bg = 0;
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) bg += at(wall, x + dx, y + dy) === 2 ? 1 : 0;
+          const i = y * cols + x;
+          mask[i] = 1 - bg / 9;
+          if (mask[i] > 0.6) { hist[Math.min(63, (lum[i] * 64) | 0)]++; count++; }
+        }
+      }
+
+      // 2. Stretch the subject's own brightness range to full contrast. The
+      //    range is eased between frames so the picture does not pump.
+      let lo = 0, hi = 1, acc = 0;
+      for (let k = 0; k < 64; k++) {
+        acc += hist[k];
+        if (acc <= count * 0.04) lo = (k + 1) / 64;
+        if (acc <= count * 0.97) hi = (k + 2) / 64;
+      }
+      grid.lo = grid.lo < 0 ? lo : grid.lo + (lo - grid.lo) * 0.15;
+      grid.hi = grid.hi < 0 ? hi : grid.hi + (hi - grid.hi) * 0.15;
+      const span = Math.max(0.05, grid.hi - grid.lo);
+      // The 0.75 power lifts dark hair and a dark shirt so they still show.
+      for (let i = 0; i < n; i++) lum[i] = Math.pow(Math.min(1, Math.max(0, (lum[i] - grid.lo) / span)), 0.75);
+
+      // 3. Local contrast: push each cell away from its neighbourhood average,
+      //    which brings out eyes, brows and the mouth.
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          let sum = 0;
+          for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) sum += at(lum, x + dx, y + dy);
+          const v = lum[y * cols + x];
+          sharp[y * cols + x] = Math.min(1, Math.max(0, v + 1.1 * (v - sum / 25)));
+        }
+      }
+
+      // 4. Edges, from brightness inside the subject and from the cut-out outline.
+      const sobel = (arr, x, y) => {
+        const gx = at(arr, x + 1, y - 1) + 2 * at(arr, x + 1, y) + at(arr, x + 1, y + 1)
+          - at(arr, x - 1, y - 1) - 2 * at(arr, x - 1, y) - at(arr, x - 1, y + 1);
+        const gy = at(arr, x - 1, y + 1) + 2 * at(arr, x, y + 1) + at(arr, x + 1, y + 1)
+          - at(arr, x - 1, y - 1) - 2 * at(arr, x, y - 1) - at(arr, x + 1, y - 1);
+        return [gx, gy];
+      };
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const m = mask[i];
+          tone[i] = 0;
+          glyph[i] = -1; // -1: pick from the density ramp
+          const [ox, oy] = sobel(mask, x, y);
+          const outline = Math.hypot(ox, oy);
+          if (m < 0.35 && outline < 0.9) continue;
+          let t = m * (0.1 + 0.9 * Math.pow(sharp[i], 0.95));
+          const [gx, gy] = sobel(lum, x, y);
+          const inner = Math.hypot(gx, gy) * m;
+          let ex = gx, ey = gy, strength = inner;
+          if (outline > 1.1) { ex = ox; ey = oy; strength = Math.max(inner, 1.3); }
+          if (strength > 1.05) {
+            // The stroke runs along the edge, at right angles to the gradient.
+            // Cells are taller than wide, so weight the vertical part to match.
+            const deg = (Math.atan2(ey * 1.55, ex) * 180 / Math.PI + 180) % 180;
+            glyph[i] = GLYPH_RAMP + (deg < 22.5 || deg >= 157.5 ? 0 : deg < 67.5 ? 3 : deg < 112.5 ? 2 : 1);
+            t = Math.max(t, Math.min(1, 0.5 + 0.22 * strength));
+          }
+          tone[i] = t;
+        }
+      }
+      grid.ready = true;
+      return true;
+    };
+
+    const paint = (now) => {
+      if (!grid || !fontReady) return;
+      const speaking = ASK_LIVE.speaking;
+
+      // Pick the frame: the talking loop while answering, otherwise the idle
+      // loop, otherwise the still.
+      if (!still) {
+        if (speaking) play(talk);
+        else if (talk && !talk.paused) talk.pause();
+        play(idle);
+      }
+      const video = still ? null : speaking && playing(talk) ? talk : playing(idle) ? idle : null;
+      if (video) analyze(video, video.videoWidth, video.videoHeight);
+      else if (!grid.ready && img.complete && img.naturalWidth) analyze(img, img.naturalWidth, img.naturalHeight);
+      if (!grid.ready) return;
+      if (!born) born = now;
+
+      const { cols, rows, cwD, chD, tone, glyph, phase, atlas } = grid;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const t = now / 1000;
+      const amp = still ? 0 : speaking ? 0.2 : 0.07;
+      const rate = speaking ? 7 : 1.5;
+      // A slow band of light moving down, and a top-to-bottom reveal on load.
+      const band = still ? -1 : ((t * (speaking ? 0.5 : 0.14)) % 1.5) - 0.25;
+      const shown = still ? 2 : (now - born) / 1100;
+
+      for (let y = 0; y < rows; y++) {
+        const fy = y / rows;
+        if (fy > shown) break;
+        const glow = Math.max(0, 1 - Math.abs(fy - band) * 8) * 0.3;
+        const fade = fy > 0.88 ? (1 - fy) / 0.12 : 1;
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const base = tone[i];
+          if (base < 0.05) continue;
+          let v = (base * (1 - amp + amp * Math.sin(t * rate + phase[i])) + glow * base) * fade;
+          if (v > 1) v = 1;
+          const g = glyph[i] >= 0 ? glyph[i] : Math.max(1, Math.round(v * (GLYPH_RAMP - 1)));
+          const lv = Math.round(v * (GLYPH_LEVELS - 1));
+          ctx.drawImage(atlas, g * cwD, lv * chD, cwD, chD, x * cwD, y * chD, cwD, chD);
+        }
+      }
+    };
+
+    const loop = (now) => {
+      raf = requestAnimationFrame(loop);
+      // About 16 frames a second follows the video and keeps it light.
+      if (now - last < 60) return;
+      last = now;
+      paint(now);
+    };
+
+    const start = () => {
+      layout();
+      cancelAnimationFrame(raf);
+      if (still) paint(performance.now());
+      else raf = requestAnimationFrame(loop);
+    };
+
+    // The sprite sheet needs the mono font; draw once it is ready.
+    const go = () => { fontReady = true; start(); };
+    (document.fonts?.load ? document.fonts.load('600 12px "JetBrains Mono"') : Promise.resolve()).then(go, go);
+    img.onload = () => { if (still && fontReady) start(); };
+
+    const ro = new ResizeObserver(() => { if (fontReady) start(); });
+    ro.observe(canvas);
+    // Stop the work while the tab is hidden.
+    const onVis = () => {
+      if (still) return;
+      cancelAnimationFrame(raf);
+      if (document.hidden) { idle?.pause(); talk?.pause(); }
+      else raf = requestAnimationFrame(loop);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      ro.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <div className="ask-portrait">
+      <canvas ref={ref} role="img" aria-label="Portrait of Mohammad Zayed, drawn in characters" />
+      <video ref={idleRef} className="ask-portrait-src" src="/assets/portrait-idle.mp4" muted loop playsInline autoPlay preload="auto" aria-hidden="true" tabIndex={-1} />
+      <video ref={talkRef} className="ask-portrait-src" src="/assets/portrait-talk.mp4" muted loop playsInline preload="auto" aria-hidden="true" tabIndex={-1} />
+    </div>
+  );
+}
+
+
+function AskLeadForm({ sessionId }) {
+  const [email, setEmail] = React.useState("");
+  const [state, setState] = React.useState("idle"); // idle | sending | saved | failed
+  const inputId = React.useId();
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (state === "sending" || !email.trim()) return;
+    setState("sending");
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "lead", sessionId, email: email.trim() }),
+      });
+      setState(res.ok ? "saved" : "failed");
+    } catch {
+      setState("failed");
+    }
+  };
+
+  if (state === "saved") return <span className="ask-lead-note">Got it. I'll follow up by email.</span>;
+  return (
+    <form className="ask-lead" onSubmit={submit}>
+      <label htmlFor={inputId} className="sr-only">Your email</label>
+      <input
+        id={inputId}
+        className="ask-input"
+        type="email"
+        required
+        maxLength={254}
+        autoComplete="email"
+        placeholder="you@company.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)} />
+      <button type="submit" className="ask-send" disabled={state === "sending"}>
+        {state === "sending" ? "Sending" : "Leave my email"}
+      </button>
+      {state === "failed" &&
+        <span className="ask-lead-note" role="alert">
+          That didn't save. <a href="#contact" onClick={(e) => { e.preventDefault(); jumpToContact(); }} style={{ color: "#93c5fd" }}>Email me from the contact section</a> instead.
+        </span>
+      }
+    </form>
+  );
+}
+
+function AskButtons({ markers, sessionId }) {
+  if (!markers.length) return null;
+  return (
+    <div className="ask-buttons">
+      {markers.map((m) => {
+        const c = ASK_CASES[m];
+        if (c) {
+          return (
+            <a key={m} className="ask-case" href={`/projects/${c.id}`}>
+              <img src={c.img} alt="" className={c.logo ? "is-logo" : undefined} width={c.logo ? 44 : 64} height="44" loading="lazy" />
+              See how I built {c.name}
+            </a>
+          );
+        }
+        if (m === "resume") {
+          return <a key={m} className="ask-action" href="/resume" target="_blank" rel="noopener noreferrer">Resume</a>;
+        }
+        if (m === "contact") {
+          return <button key={m} type="button" className="ask-action" data-track="talk-to-real-me" onClick={jumpToContact}>Talk to the real me</button>;
+        }
+        if (m === "lead") return <AskLeadForm key={m} sessionId={sessionId} />;
+        return null;
+      })}
+    </div>
+  );
+}
+
+function AskTurn({ turn, sessionId }) {
+  const streaming = turn.status === "streaming";
+  const { paragraphs, markers } = turn.note
+    ? { paragraphs: [ASK_NOTES[turn.note]], markers: turn.note === "rate" || turn.note === "refusal" ? [] : ["contact", "resume"] }
+    : parseAnswer(turn.raw, streaming);
+  return (
+    <div className={`ask-turn ${turn.seed ? "is-seed" : "is-new"}`}>
+      <p className="ask-q">{turn.q}</p>
+      <div className="ask-a">
+        {streaming && paragraphs.length === 0 &&
+          <span className="ask-dots" aria-label="Thinking"><span /><span /><span /></span>
+        }
+        {paragraphs.map((p, i) =>
+          <p key={i}>
+            {p}
+            {streaming && i === paragraphs.length - 1 && <span className="ask-caret" aria-hidden="true" />}
+          </p>
+        )}
+        {!streaming && <AskButtons markers={markers} sessionId={sessionId} />}
+      </div>
+    </div>
+  );
+}
+
+function AskChat({ onActive }) {
+  const sessionId = React.useMemo(askSessionId, []);
+  const [turns, setTurns] = React.useState([]);
+  const [input, setInput] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  React.useEffect(() => {
+    ASK_LIVE.speaking = busy;
+    return () => { ASK_LIVE.speaking = false; };
+  }, [busy]);
+  const [deal, setDeal] = React.useState(0);
+  const formRef = React.useRef(null);
+  const turnsRef = React.useRef(turns);
+  turnsRef.current = turns;
+
+  // The conversation scrolls inside its own panel so the portrait stays in view.
+  const logRef = React.useRef(null);
+  React.useEffect(() => {
+    const log = logRef.current;
+    if (log && turns.length) log.scrollTop = log.scrollHeight;
+  }, [turns]);
+
+  const patch = (id, fields) =>
+    setTurns((ts) => ts.map((t) => (t.id === id ? { ...t, ...(typeof fields === "function" ? fields(t) : fields) } : t)));
+
+  const ask = async (text, source = "typed") => {
+    const q = text.trim().slice(0, ASK_MAX_CHARS);
+    if (!q || busy) return;
+
+    const history = [];
+    for (const t of turnsRef.current) {
+      if (t.status === "done" && !t.note && t.raw.trim()) {
+        history.push({ role: "user", content: t.q }, { role: "assistant", content: t.raw.trim() });
+      }
+    }
+    history.splice(0, Math.max(0, history.length - ASK_HISTORY_TURNS * 2));
+    const id = Date.now();
+    setTurns((ts) => [...ts, { id, q, raw: "", status: "streaming", note: null }]);
+    setInput("");
+    setBusy(true);
+
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId, source, messages: [...history, { role: "user", content: q }] }),
+      });
+      if (!res.ok || !res.body) {
+        let code = "closed";
+        try { code = (await res.json()).error || "closed"; } catch {}
+        patch(id, { status: "done", note: code === "rate" ? "rate" : "closed" });
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let failed = false;
+      const handle = (line) => {
+        if (!line.trim()) return;
+        let ev;
+        try { ev = JSON.parse(line); } catch { return; }
+        if (ev.type === "text") patch(id, (t) => ({ raw: t.raw + ev.text }));
+        else if (ev.type === "refusal") patch(id, { note: "refusal" });
+        else if (ev.type === "error") failed = true;
+      };
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+        lines.forEach(handle);
+      }
+      handle(buffer);
+      patch(id, (t) => ({ status: "done", note: failed ? "closed" : t.note }));
+    } catch {
+      patch(id, { status: "done", note: "closed" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const asked = new Set(turns.filter((t) => !t.note).map((t) => t.q));
+  const pool = ASK_PROMPTS.filter((c) => !asked.has(c));
+  const chips = pool.length <= ASK_PROMPTS_SHOWN
+    ? pool
+    : Array.from({ length: ASK_PROMPTS_SHOWN }, (_, i) => pool[(deal * ASK_PROMPTS_SHOWN + i) % pool.length]);
+  const hasLog = turns.length > 0;
+  React.useEffect(() => { onActive?.(hasLog); }, [hasLog]);
+
+  return (
+    <div className="ask-chat">
+      {hasLog &&
+        <div ref={logRef} className="ask-log" tabIndex={0} role="log" aria-live="polite" aria-busy={busy} aria-label="Conversation with the AI version of Mohammad">
+          {turns.map((t) => <AskTurn key={t.id} turn={t} sessionId={sessionId} />)}
+        </div>
+      }
+
+      {chips.length > 0 &&
+        <div className="ask-chips">
+          {pool.length > ASK_PROMPTS_SHOWN &&
+            <button type="button" className="ask-refresh" aria-label="Show other suggested questions" title="Other questions"
+              disabled={busy} data-track="refresh-prompts" onClick={() => setDeal((d) => d + 1)}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          }
+          {chips.map((c) =>
+            <button key={c} type="button" className="ask-chip" disabled={busy} onClick={() => ask(c, "prompt")}>{c}</button>
+          )}
+        </div>
+      }
+
+      <form ref={formRef} className="ask-form" onSubmit={(e) => { e.preventDefault(); ask(input); }}>
+        <label htmlFor="ask-input" className="sr-only">Your question</label>
+        <input
+          id="ask-input"
+          className="ask-input"
+          type="text"
+          autoComplete="off"
+          maxLength={ASK_MAX_CHARS}
+          placeholder="Ask about Mohammad"
+          value={input}
+          onChange={(e) => setInput(e.target.value)} />
+        <button type="submit" className="ask-send" disabled={busy || !input.trim()}>Ask</button>
+      </form>
+
+    </div>
+  );
+}
+
+function ChatHome() {
+  const [active, setActive] = React.useState(false);
+  return (
+    <section id="top" className={`ask-home ${active ? "is-active" : ""}`}>
+      <div className="ask-hero">
+        <h1 className="ask-name">Mohammad Zayed</h1>
+        <p className="ask-tagline">Software engineer</p>
+        <GlyphPortrait />
+      </div>
+      <AskChat onActive={setActive} />
+      <div className="ask-side-actions">
+        <a className="ask-action" href="/resume" target="_blank" rel="noopener noreferrer">Resume</a>
+        <button type="button" className="ask-action" data-track="talk-to-real-me" onClick={jumpToContact}>Talk to the real me</button>
+      </div>
+      <p className="ask-intro">
+        I'm Mohammad Zayed, a software engineer in Orange County, California. I built LineReady, the app my
+        Chick-fil-A runs on, and I graduate from Cal State Long Beach in May 2027. I'm open to full-time
+        software engineering roles. See my <a href="/projects">projects</a> or read more <a href="/about">about me</a>.
+      </p>
+    </section>
+  );
+}
