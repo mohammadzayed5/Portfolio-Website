@@ -6,18 +6,32 @@ const ASK_HISTORY_TURNS = 6;
 const ASK_MAX_CHARS = 500;
 
 // Suggested questions, three at a time. The refresh button deals the next three.
-const ASK_PROMPTS = [
-  "What did you build for Chick-fil-A?",
-  "What roles are you looking for?",
-  "Which project are you proudest of?",
-  "Show me LockedIn",
-  "What's your background?",
-  "Where can I try your apps?",
-  "Tell me about the security hole you closed",
-  "How did you speed up food search?",
-  "What's your stack?",
-  "How do I reach you?",
-];
+// Each one has a written answer, shown if the live chat can't answer (no API
+// credit, an outage), so the suggested questions always work. Every fact here
+// comes from twin/knowledge.md; keep the two in step.
+const ASK_FALLBACK = {
+  "What did you build for Chick-fil-A?":
+    "Two things. LineReady is the app my store runs on: food-safety checks, training with videos, checklists, scheduling, team messaging and our team points system. 40 team members use it, and leaders use it every shift.\n\nI also built our store's website at cfafoothill.com. Guests get careers, catering and community pages, and the team side handles requests like time-punch fixes and sick pay. [[case:lineready]]",
+  "What roles are you looking for?":
+    "Full-time software engineering roles starting after I graduate in May 2027.\n\nI'll relocate anywhere, I'm happy to work in person, and I don't need visa sponsorship. [[resume]]",
+  "Which project are you proudest of?":
+    "LineReady. It's the app my own Chick-fil-A runs on, so I'm my own first user. I built it for the people I work next to, which is why it's in English and Spanish and why a new hire joins with just an invite code.\n\nUnder the hood, each store's data is kept separate in Postgres with row-level security, and it ships on the iOS App Store and the web from one codebase. [[case:lineready]]",
+  "Show me LockedIn":
+    "LockedIn is a nutrition and GLP-1 tracker: meal and macro logging, barcode scanning, food search, dose logging, titration schedules and dose-vs-weight charts. It's in English, Spanish and Arabic, including right-to-left layout.\n\nIt's still in development and not publicly released yet. [[case:lockedin]]",
+  "What's your background?":
+    "I'm a Director at the Chick-fil-A in Foothill Ranch, California. I started there in March 2022 as a Team Member and have been a Director since June 2024. I write the software my store runs on.\n\nI'm finishing a B.S. in Computer Science at Cal State Long Beach and graduate in May 2027. I've been programming for about 5 years. [[resume]]",
+  "Where can I try your apps?":
+    "LineReady is at linereadyapp.com and on the iOS App Store. Mini Golf Score Tracker is at minigolfscoretracker.com and on the App Store too. My store's website is cfafoothill.com.\n\nLockedIn isn't publicly released yet. [[case:minigolf]]",
+  "Tell me about the security hole you closed":
+    "I found a production hole in LineReady: invite tokens were readable by clients that weren't signed in. I locked the table behind row-level security and moved the lookup into a scoped RPC.\n\nThen I verified the fix end to end as an anonymous client, the same way an attacker would come at it. The lesson: test your security as the attacker, not as yourself. [[case:lineready]]",
+  "How did you speed up food search?":
+    "In LockedIn, search over 321,737 foods was slow: \"banana\" took 5,607 ms. The filter used strpos(), which Postgres can't serve from an index, so every search scanned the whole table. I swapped it for an indexed ILIKE and it dropped to 223 ms.\n\nI fixed ranking while I was in there, so plain staples beat branded products. \"Chicken breast\" went from result #1296 to #1. [[case:lockedin]]",
+  "What's your stack?":
+    "Mostly React and Vite on the front end, with Capacitor to ship the same code to iOS. On the back end, Flask, PostgreSQL and Supabase with row-level security.\n\nLanguages: Python, JavaScript, Java, C++, C and SQL. [[resume]]",
+  "How do I reach you?":
+    "LinkedIn is the fastest way: linkedin.com/in/mohammadzayedd, with two d's at the end.\n\nMy email is in the contact section at the bottom of this page. [[contact]]",
+};
+const ASK_PROMPTS = Object.keys(ASK_FALLBACK);
 const ASK_PROMPTS_SHOWN = 3;
 
 const ASK_CASES = {
@@ -30,7 +44,7 @@ const ASK_CASES = {
 const ASK_MARKER_RE = /\[\[(case:[a-z-]+|resume|contact|lead)\]\]/g;
 
 const ASK_NOTES = {
-  closed: "I can't answer right now. The real me can.",
+  closed: "I can't answer that one right now. The suggested questions still work, or ask the real me.",
   rate: "That's a lot of questions at once. Give it a minute and try again.",
   refusal: "That one's outside my lane. I'm better at talking about what I've built.",
 };
@@ -510,7 +524,8 @@ function AskChat({ onActive }) {
       if (!res.ok || !res.body) {
         let code = "closed";
         try { code = (await res.json()).error || "closed"; } catch {}
-        patch(id, { status: "done", note: code === "rate" ? "rate" : "closed" });
+        if (code !== "rate" && ASK_FALLBACK[q]) patch(id, { status: "done", raw: ASK_FALLBACK[q] });
+        else patch(id, { status: "done", note: code === "rate" ? "rate" : "closed" });
         return;
       }
 
@@ -535,9 +550,11 @@ function AskChat({ onActive }) {
         lines.forEach(handle);
       }
       handle(buffer);
-      patch(id, (t) => ({ status: "done", note: failed ? "closed" : t.note }));
+      if (failed && ASK_FALLBACK[q]) patch(id, { status: "done", raw: ASK_FALLBACK[q], note: null });
+      else patch(id, (t) => ({ status: "done", note: failed ? "closed" : t.note }));
     } catch {
-      patch(id, { status: "done", note: "closed" });
+      if (ASK_FALLBACK[q]) patch(id, { status: "done", raw: ASK_FALLBACK[q], note: null });
+      else patch(id, { status: "done", note: "closed" });
     } finally {
       setBusy(false);
     }

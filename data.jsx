@@ -17,7 +17,7 @@ const PROJECTS = [
     year: "2026",
     role: "Solo, founder of Zayed Software LLC",
     overview:
-      "A multi-tenant restaurant operations platform I built for my own Chick-fil-A. It covers food-safety checks, training with videos, checklists, scheduling, team messaging, and a team points system, and it ships on the iOS App Store and the web from one codebase. 29 of our roughly 40 team members have accounts; leaders use it every shift for food-safety checks and our team points system.",
+      "A multi-tenant restaurant operations platform I built for my own Chick-fil-A. It covers food-safety checks, training with videos, checklists, scheduling, team messaging, and a team points system, and it ships on the iOS App Store and the web from one codebase. 40 team members use it; leaders use it every shift for food-safety checks and our team points system.",
     problem:
       "I was running shifts and watching information get lost in group chats. I wanted one tool for the people I work next to: food-safety checks, training, scheduling, messaging and accountability in one place, in English and Spanish, because our shifts are bilingual and nobody is sitting at a desk.",
     approach: [
@@ -28,7 +28,7 @@ const PROJECTS = [
       "Found and closed a production hole where invite tokens were readable by unauthenticated clients: locked the table behind row-level security, moved the lookup into a scoped RPC, then verified the fix as an anonymous client.",
     ],
     metrics: [
-      { v: "29 of ~40", l: "team members have accounts" },
+      { v: "40", l: "team members use it" },
       { v: "Every shift", l: "food-safety checks + team points" },
       { v: "iOS + Web", l: "one codebase" },
     ],
