@@ -57,7 +57,8 @@ create table if not exists public.ask_events (
   seconds integer,        -- 'leave' rows: seconds the page was in view
   scroll_pct smallint,    -- 'leave' rows: how far down the page they got
   network text,           -- name of the network they are on, e.g. a company
-  network_domain text
+  network_domain text,
+  site text               -- which site the event came from, e.g. mohammadzayed.com
 );
 
 -- For a database made before these columns existed.
@@ -67,7 +68,8 @@ alter table public.ask_events
   add column if not exists seconds integer,
   add column if not exists scroll_pct smallint,
   add column if not exists network text,
-  add column if not exists network_domain text;
+  add column if not exists network_domain text,
+  add column if not exists site text;
 
 alter table public.ask_log enable row level security;
 alter table public.ask_leads enable row level security;
@@ -98,7 +100,9 @@ with s as (
     max(e.network) as network,
     max(e.network_domain) as network_domain,
     max(e.tag) as tag,
-    max(e.referrer) filter (where e.referrer is not null and e.referrer not like '%mohammadzayed.com%') as came_from,
+    coalesce(max(e.site), 'mohammadzayed.com') as site,
+    max(e.referrer) filter (where e.referrer is not null
+      and e.referrer not like '%' || coalesce(e.site, 'mohammadzayed.com') || '%') as came_from,
     count(*) filter (where e.event = 'visit') as page_views,
     count(*) filter (where e.event = 'click') as clicks,
     coalesce(sum(e.seconds), 0) as seconds_on_site,
@@ -108,7 +112,7 @@ with s as (
   group by e.session_id
 )
 select
-  s.session_id, s.first_seen, s.last_seen,
+  s.site, s.session_id, s.first_seen, s.last_seen,
   s.network, s.network_domain, s.tag, s.came_from,
   s.country, s.region, s.city, s.device,
   s.page_views, s.clicks, s.seconds_on_site, s.deepest_scroll_pct, s.opened_resume,

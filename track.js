@@ -1,5 +1,7 @@
-/* Visit, click and time-on-page tracking for every page. Events go to /api/ask
-   and are stored in Supabase (table ask_events). No cookies. Two ids are kept in
+/* Visit, click and time-on-page tracking for every page. Events go to the
+   portfolio's /api/ask and are stored in Supabase (table ask_events). The same
+   file works unchanged on Mohammad's other sites listed in EVENT_SITES in
+   netlify/functions/ask/ask.mjs. No cookies. Two ids are kept in
    the browser: one for this tab (ask.sid) and one that stays between visits
    (ask.vid), so a returning visitor can be recognized. */
 (function () {
@@ -35,6 +37,9 @@
     }
   });
 
+  var here = /(^|\.)mohammadzayed\.com$|^localhost$|^127\./.test(location.hostname);
+  var endpoint = here ? "/api/ask" : "https://mohammadzayed.com/api/ask";
+
   function send(event, detail, extra) {
     try {
       var data = {
@@ -44,10 +49,11 @@
       };
       if (extra) for (var k in extra) data[k] = extra[k];
       var body = JSON.stringify(data);
+      // Sent as plain text so another site can post it without a preflight request.
       if (navigator.sendBeacon) {
-        navigator.sendBeacon("/api/ask", new Blob([body], { type: "application/json" }));
+        navigator.sendBeacon(endpoint, body);
       } else {
-        fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: body, keepalive: true });
+        fetch(endpoint, { method: "POST", body: body, keepalive: true, mode: here ? "same-origin" : "no-cors" });
       }
     } catch (e) {}
   }

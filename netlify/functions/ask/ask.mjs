@@ -4,6 +4,7 @@
 //   { type: "lead", sessionId, email }                  -> saves a contact email
 //   { type: "event", sessionId, event, detail, path, ref, visitorId, tag, seconds, scroll }
 //                                                        -> logs a visit, a click or time on a page
+//                                                           (also accepted from the sites in EVENT_SITES)
 //
 // Every limit fails closed: if a counter cannot be read or written, or the
 // API key or the twin prompt is missing, the visitor is pointed at the real
@@ -22,6 +23,11 @@ const num = (name, fallback) => {
   const n = Number(process.env[name]);
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
+
+// Mohammad's other sites may send visit, click and leave events here, so one
+// table covers all of them. They can never use the chat or the email form.
+const EVENT_SITES = ['zayedsoftwarellc.com', 'cfafoothill.com', 'homeworkplanner.app'];
+const bareHost = (host) => host.toLowerCase().replace(/^www\./, '');
 
 const LIMITS = {
   // No per-visit question limit. The per-visitor and site-wide daily caps
@@ -158,12 +164,24 @@ export function createHandler(deps = {}) {
   return async function handler(req, context = {}) {
     if (req.method !== 'POST') return json(405, { error: 'method' });
 
-    // Browsers on other sites cannot use this endpoint.
+    // Browsers on other sites cannot use this endpoint, except the listed
+    // sites, which may only send tracking events.
+    let site = '';
+    let otherSite = false;
+    try { site = bareHost(new URL(req.url).host); } catch {}
     const origin = req.headers.get('origin');
     if (origin) {
+      let originHost = '';
       let sameHost = false;
-      try { sameHost = new URL(origin).host === new URL(req.url).host; } catch {}
-      if (!sameHost) return json(403, { error: 'origin' });
+      try {
+        originHost = new URL(origin).host;
+        sameHost = originHost === new URL(req.url).host;
+      } catch {}
+      if (!sameHost) {
+        if (!EVENT_SITES.includes(bareHost(originHost))) return json(403, { error: 'origin' });
+        site = bareHost(originHost);
+        otherSite = true;
+      }
     }
 
     let body;
@@ -174,6 +192,8 @@ export function createHandler(deps = {}) {
     } catch {
       return json(400, { error: 'bad_request' });
     }
+
+    if (otherSite && body?.type !== 'event') return json(403, { error: 'origin' });
 
     const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '';
     if (!/^[a-zA-Z0-9-]{16,64}$/.test(sessionId)) return json(400, { error: 'bad_request' });
@@ -222,6 +242,7 @@ export function createHandler(deps = {}) {
 
         const visitorId = typeof body.visitorId === 'string' && /^[a-zA-Z0-9-]{16,64}$/.test(body.visitorId) ? body.visitorId : null;
         await insert('ask_events', {
+          site: site || null,
           session_id: sessionId,
           ip_hash: ipHash,
           event,
