@@ -1,28 +1,49 @@
-/* Visit and click tracking for every page. Events go to /api/ask and are stored
-   in Supabase (table ask_events). No cookies; the id lasts for one browser tab. */
+/* Visit, click and time-on-page tracking for every page. Events go to /api/ask
+   and are stored in Supabase (table ask_events). No cookies. Two ids are kept in
+   the browser: one for this tab (ask.sid) and one that stays between visits
+   (ask.vid), so a returning visitor can be recognized. */
 (function () {
-  function sid() {
+  function stored(store, key, make) {
     try {
-      var id = sessionStorage.getItem("ask.sid");
-      if (!id) {
-        id = crypto.randomUUID();
-        sessionStorage.setItem("ask.sid", id);
+      var v = store.getItem(key);
+      if (!v && make) {
+        v = make();
+        if (v) store.setItem(key, v);
       }
-      return id;
+      return v || null;
     } catch (e) {
       return null;
     }
   }
-  var id = sid();
-  if (!id) return;
+  function uuid() { return crypto.randomUUID(); }
 
-  function send(event, detail) {
+  var id = stored(sessionStorage, "ask.sid", uuid);
+  if (!id) return;
+  var vid = stored(localStorage, "ask.vid", uuid);
+
+  // A tagged link looks like mohammadzayed.com/?from=linkedin. The tag is kept
+  // for the whole visit, so later pages and clicks carry it too.
+  var tag = stored(sessionStorage, "ask.tag", function () {
     try {
-      var body = JSON.stringify({
-        type: "event", sessionId: id, event: event,
+      var q = new URLSearchParams(location.search);
+      var t = q.get("from") || q.get("ref") || q.get("utm_source") || "";
+      var c = q.get("utm_campaign");
+      if (t && c) t += "/" + c;
+      return t.slice(0, 80);
+    } catch (e) {
+      return "";
+    }
+  });
+
+  function send(event, detail, extra) {
+    try {
+      var data = {
+        type: "event", sessionId: id, visitorId: vid, tag: tag || "", event: event,
         detail: String(detail || "").slice(0, 200),
         path: location.pathname, ref: document.referrer || "",
-      });
+      };
+      if (extra) for (var k in extra) data[k] = extra[k];
+      var body = JSON.stringify(data);
       if (navigator.sendBeacon) {
         navigator.sendBeacon("/api/ask", new Blob([body], { type: "application/json" }));
       } else {
@@ -38,4 +59,32 @@
     if (!el) return;
     send("click", el.getAttribute("data-track") || el.getAttribute("href"));
   }, true);
+
+  // Time on the page (only while the tab is in view) and how far down they got.
+  var shownAt = document.visibilityState === "visible" ? Date.now() : 0;
+  var unsent = 0;
+  var deepest = 0;
+  function measure() {
+    var doc = document.documentElement;
+    var room = doc.scrollHeight - window.innerHeight;
+    var pct = room > 0 ? Math.round((window.scrollY / room) * 100) : 100;
+    if (pct > deepest) deepest = Math.min(pct, 100);
+  }
+  function leave() {
+    if (shownAt) {
+      unsent += Date.now() - shownAt;
+      shownAt = 0;
+    }
+    var seconds = Math.round(unsent / 1000);
+    if (seconds < 1) return;
+    unsent = 0;
+    measure();
+    send("leave", "", { seconds: seconds, scroll: deepest });
+  }
+  window.addEventListener("scroll", measure, { passive: true });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") leave();
+    else if (!shownAt) shownAt = Date.now();
+  });
+  window.addEventListener("pagehide", leave);
 })();

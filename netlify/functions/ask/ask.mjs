@@ -2,7 +2,8 @@
 //
 //   { sessionId, messages: [{ role, content }, ...] }   -> streamed answer (NDJSON)
 //   { type: "lead", sessionId, email }                  -> saves a contact email
-//   { type: "event", sessionId, event, detail, path, ref } -> logs a visit or click
+//   { type: "event", sessionId, event, detail, path, ref, visitorId, tag, seconds, scroll }
+//                                                        -> logs a visit, a click or time on a page
 //
 // Every limit fails closed: if a counter cannot be read or written, or the
 // API key or the twin prompt is missing, the visitor is pointed at the real
@@ -78,6 +79,25 @@ function visitorInfo(req, context) {
 
 const clip = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
 
+const wholeNumber = (v, max) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : null;
+};
+
+/** Name of the network a visitor is on ("Google LLC", "Spectrum"), from a public
+    IP lookup. The address is sent to ipwho.is for this and is never stored here. */
+async function lookupNetworkName(ip) {
+  if (!ip || ip === 'unknown' || /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|f[cd])/i.test(ip)) return null;
+  const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?fields=success,connection`, {
+    signal: AbortSignal.timeout(1500),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const c = data?.success ? data.connection : null;
+  if (!c) return null;
+  return { network: clip(c.org || c.isp, 120) || null, network_domain: clip(c.domain, 120) || null };
+}
+
 async function readCount(store, key) {
   const v = await store.get(key, { type: 'json' });
   return v && typeof v.n === 'number' ? v.n : 0;
@@ -132,6 +152,7 @@ export function createHandler(deps = {}) {
   const getLimitStore = deps.getLimitStore ?? (() => getStore('ask-limits'));
   const insert = deps.insert ?? supabaseInsert;
   const hasKey = deps.hasKey ?? (() => Boolean(process.env.ANTHROPIC_API_KEY));
+  const lookupNetwork = deps.lookupNetwork ?? lookupNetworkName;
   const hashSecret = deps.hashSecret ?? (() => process.env.ASK_HASH_SECRET || process.env.ANTHROPIC_API_KEY);
 
   return async function handler(req, context = {}) {
@@ -177,12 +198,29 @@ export function createHandler(deps = {}) {
     if (body.type === 'event') {
       const quiet = new Response(null, { status: 204 });
       const event = body.event;
-      if ((event !== 'visit' && event !== 'click') || visitor.device === 'bot') return quiet;
+      if (!['visit', 'click', 'leave'].includes(event) || visitor.device === 'bot') return quiet;
       try {
         const key = `ev/${Math.floor(Date.now() / 60000)}/${ipHash}`;
         const n = await readCount(store, key);
         if (n >= LIMITS.eventsPerMinute) return quiet;
         await bump(store, key, n);
+
+        // The network name is looked up once per visitor per day, on a page visit.
+        let net = null;
+        if (event === 'visit') {
+          try {
+            const netKey = `net/${day}/${ipHash}`;
+            net = await store.get(netKey, { type: 'json' });
+            if (!net) {
+              net = (await lookupNetwork(ip)) || { network: null, network_domain: null };
+              await store.setJSON(netKey, net);
+            }
+          } catch (err) {
+            console.error(`[ask] network lookup failed: ${err?.message}`);
+          }
+        }
+
+        const visitorId = typeof body.visitorId === 'string' && /^[a-zA-Z0-9-]{16,64}$/.test(body.visitorId) ? body.visitorId : null;
         await insert('ask_events', {
           session_id: sessionId,
           ip_hash: ipHash,
@@ -190,6 +228,12 @@ export function createHandler(deps = {}) {
           detail: clip(body.detail, 200) || null,
           path: clip(body.path, 200) || null,
           referrer: clip(body.ref, 300) || null,
+          visitor_id: visitorId,
+          tag: clip(body.tag, 80).replace(/[^\w.\-\/ ]/g, '') || null,
+          seconds: event === 'leave' ? wholeNumber(body.seconds, 3600) : null,
+          scroll_pct: event === 'leave' ? wholeNumber(body.scroll, 100) : null,
+          network: net?.network || null,
+          network_domain: net?.network_domain || null,
           ...visitor,
         });
       } catch (err) {
