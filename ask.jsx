@@ -35,10 +35,22 @@ const ASK_PROMPTS = Object.keys(ASK_FALLBACK);
 const ASK_PROMPTS_SHOWN = 3;
 
 const ASK_CASES = {
-  "case:lineready": { id: "lineready", name: "LineReady", img: "images/LineReadyLogo.png", logo: true },
-  "case:lockedin": { id: "lockedin", name: "LockedIn", img: "assets/LockedinDashboard.png" },
-  "case:minigolf": { id: "minigolf", name: "Mini Golf", img: "assets/golf-home.png" },
-  "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", img: "assets/CFAWebsiteHome.png" },
+  "case:lineready": { id: "lineready", name: "LineReady", sub: "Restaurant operations app, iOS and web", img: "images/LineReadyLogo.png", logo: true },
+  "case:lockedin": { id: "lockedin", name: "LockedIn", sub: "Nutrition and GLP-1 tracker", img: "assets/LockedinDashboard.png" },
+  "case:minigolf": { id: "minigolf", name: "Mini Golf", sub: "Multiplayer scorekeeping, iOS and web", img: "assets/golf-home.png" },
+  "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", sub: "Store website and team portal", img: "assets/CFAWebsiteHome.png" },
+};
+
+const ASK_GREETING = "Hi, I'm an AI version of Mohammad. Ask me about what I've built or the roles I'm looking for.";
+
+// After an answer, the suggested questions that follow on from it are offered first.
+const ASK_RELATED = {
+  "case:lineready": ["Tell me about the security hole you closed", "What's your stack?", "Where can I try your apps?"],
+  "case:lockedin": ["How did you speed up food search?", "What's your stack?", "Where can I try your apps?"],
+  "case:minigolf": ["Where can I try your apps?", "What's your stack?", "Which project are you proudest of?"],
+  "case:cfa-site": ["What did you build for Chick-fil-A?", "What's your background?", "What's your stack?"],
+  resume: ["What's your background?", "Which project are you proudest of?", "How do I reach you?"],
+  contact: ["What roles are you looking for?", "What's your background?", "Which project are you proudest of?"],
 };
 
 const ASK_MARKER_RE = /\[\[(case:[a-z-]+|resume|contact|lead)\]\]/g;
@@ -79,8 +91,15 @@ function jumpToContact() {
   document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* Shared with the portrait so it livens up while an answer is streaming. */
-const ASK_LIVE = { speaking: false };
+/* Shared with the portrait so it reacts to the conversation: it shimmers while
+   an answer is on its way, talks while the answer is being written out, lights
+   up a little on each key typed, and sends a ring outward when a question is sent. */
+const ASK_LIVE = { speaking: false, thinking: false, keyAt: -1e9, pulseAt: -1e9, pulseX: 0.5, pulseY: 0.4 };
+function askPulse(x = 0.5, y = 0.4) {
+  ASK_LIVE.pulseAt = performance.now();
+  ASK_LIVE.pulseX = x;
+  ASK_LIVE.pulseY = y;
+}
 
 // Density ramp (dark to bright), then four stroke glyphs used along edges.
 const GLYPHS = " .·:;-=+*xX#%&@" + "|/-\\";
@@ -93,6 +112,8 @@ const GLYPH_LEVELS = 12;
    Each cell gets a tone (how bright) and a glyph: flat areas use the density
    ramp, edges (jaw, brows, eyes, collar, outline) use a stroke that follows
    the edge direction. That is what makes a face read at this size.
+   It also reacts to the visitor: it turns slightly toward the pointer, the
+   cells under the pointer light up, and a click sends a ring across it.
    A still frame stands in until a video is playing, and for reduced motion. */
 function GlyphPortrait() {
   const ref = React.useRef(null);
@@ -113,6 +134,17 @@ function GlyphPortrait() {
     let last = 0;
     let born = 0;
     let fontReady = false;
+    let frame = 0;
+    const pointer = { x: 0, y: 0, seen: false };
+    const onMove = (e) => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.seen = true; };
+    const onTap = (e) => {
+      const r = canvas.getBoundingClientRect();
+      if (r.width) askPulse((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    };
+    if (!still) {
+      window.addEventListener("pointermove", onMove, { passive: true });
+      canvas.addEventListener("pointerdown", onTap);
+    }
 
     // Open just before the smile in the idle loop, so that is the first thing a visitor sees.
     const IDLE_START = 4.0;
@@ -157,8 +189,8 @@ function GlyphPortrait() {
       actx.textAlign = "center";
       for (let lv = 0; lv < GLYPH_LEVELS; lv++) {
         const v = lv / (GLYPH_LEVELS - 1);
-        const alpha = 0.22 + 0.78 * Math.pow(v, 0.8);
-        actx.fillStyle = `rgba(${Math.round(64 + 176 * v * v)},${Math.round(134 + 110 * v)},${Math.round(246 + 9 * v)},${alpha.toFixed(2)})`;
+        const alpha = 0.4 + 0.6 * Math.pow(v, 0.8);
+        actx.fillStyle = `rgba(${Math.round(120 + 135 * v)},${Math.round(178 + 77 * v)},255,${alpha.toFixed(2)})`;
         for (let g = 1; g < GLYPHS.length; g++) {
           actx.fillText(GLYPHS[g], g * cwD + cwD / 2, lv * chD + chD / 2);
         }
@@ -166,7 +198,13 @@ function GlyphPortrait() {
 
       canvas.width = cols * cwD;
       canvas.height = rows * chD;
+      // A wash of colour laid over the characters: sky blue up top, violet at the shoulders.
+      const tint = canvas.getContext("2d").createLinearGradient(0, 0, 0, canvas.height);
+      tint.addColorStop(0, "rgba(125,211,252,0.22)");
+      tint.addColorStop(0.5, "rgba(147,197,253,0)");
+      tint.addColorStop(1, "rgba(167,139,250,0.5)");
       grid = {
+        tint,
         cols, rows, n, cwD, chD, sctx, phase, atlas, ready: false,
         wall: new Uint8Array(n), mask: new Float32Array(n), lum: new Float32Array(n),
         sharp: new Float32Array(n), tone: new Float32Array(n), glyph: new Int8Array(n),
@@ -181,7 +219,9 @@ function GlyphPortrait() {
       const want = (cols * grid.cwD) / (rows * grid.chD);
       let cw = sw, ch = sh;
       if (sw / sh > want) cw = sh * want; else ch = sw / want;
-      sctx.drawImage(source, (sw - cw) / 2, 0, cw, ch, 0, 0, cols, rows);
+      // Move in on the head and shoulders so the face is the biggest thing drawn.
+      cw /= 1.3; ch /= 1.3;
+      sctx.drawImage(source, (sw - cw) / 2, sh * 0.02, cw, ch, 0, 0, cols, rows);
       let data;
       try {
         data = sctx.getImageData(0, 0, cols, rows).data;
@@ -236,7 +276,7 @@ function GlyphPortrait() {
       grid.hi = grid.hi < 0 ? hi : grid.hi + (hi - grid.hi) * 0.15;
       const span = Math.max(0.05, grid.hi - grid.lo);
       // The 0.75 power lifts dark hair and a dark shirt so they still show.
-      for (let i = 0; i < n; i++) lum[i] = Math.pow(Math.min(1, Math.max(0, (lum[i] - grid.lo) / span)), 0.75);
+      for (let i = 0; i < n; i++) lum[i] = Math.pow(Math.min(1, Math.max(0, (lum[i] - grid.lo) / span)), 0.7);
 
       // 3. Local contrast: push each cell away from its neighbourhood average,
       //    which brings out eyes, brows and the mouth.
@@ -245,7 +285,7 @@ function GlyphPortrait() {
           let sum = 0;
           for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) sum += at(lum, x + dx, y + dy);
           const v = lum[y * cols + x];
-          sharp[y * cols + x] = Math.min(1, Math.max(0, v + 1.1 * (v - sum / 25)));
+          sharp[y * cols + x] = Math.min(1, Math.max(0, v + 1.5 * (v - sum / 25)));
         }
       }
 
@@ -266,7 +306,7 @@ function GlyphPortrait() {
           const [ox, oy] = sobel(mask, x, y);
           const outline = Math.hypot(ox, oy);
           if (m < 0.35 && outline < 0.9) continue;
-          let t = m * (0.1 + 0.9 * Math.pow(sharp[i], 0.95));
+          let t = m * (0.2 + 0.8 * Math.pow(sharp[i], 1.05));
           const [gx, gy] = sobel(lum, x, y);
           const inner = Math.hypot(gx, gy) * m;
           let ex = gx, ey = gy, strength = inner;
@@ -288,6 +328,8 @@ function GlyphPortrait() {
     const paint = (now) => {
       if (!grid || !fontReady) return;
       const speaking = ASK_LIVE.speaking;
+      const thinking = ASK_LIVE.thinking;
+      frame++;
 
       // Pick the frame: the talking loop while answering, otherwise the idle
       // loop, otherwise the still.
@@ -306,11 +348,31 @@ function GlyphPortrait() {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const t = now / 1000;
-      const amp = still ? 0 : speaking ? 0.2 : 0.07;
-      const rate = speaking ? 7 : 1.5;
+      const amp = still ? 0 : thinking ? 0.45 : speaking ? 0.2 : 0.07;
+      const rate = thinking ? 11 : speaking ? 7 : 1.5;
       // A slow band of light moving down, and a top-to-bottom reveal on load.
-      const band = still ? -1 : ((t * (speaking ? 0.5 : 0.14)) % 1.5) - 0.25;
+      const band = still ? -1 : ((t * (thinking ? 1.1 : speaking ? 0.5 : 0.14)) % 1.5) - 0.25;
       const shown = still ? 2 : (now - born) / 1100;
+
+      // Where the pointer is, in cells, and a slight turn toward it.
+      let px = -1e6, py = -1e6;
+      const reach = cols * 0.22;
+      if (!still && pointer.seen) {
+        const r = canvas.getBoundingClientRect();
+        if (r.width && r.height) {
+          px = ((pointer.x - r.left) / r.width) * cols;
+          py = ((pointer.y - r.top) / r.height) * rows;
+          const dx = Math.max(-1, Math.min(1, (pointer.x - (r.left + r.width / 2)) / (window.innerWidth / 2)));
+          const dy = Math.max(-1, Math.min(1, (pointer.y - (r.top + r.height / 2)) / (window.innerHeight / 2)));
+          canvas.style.transform = `perspective(900px) rotateY(${(dx * 10).toFixed(2)}deg) rotateX(${(-dy * 7).toFixed(2)}deg)`;
+        }
+      }
+      // A ring moving outward from a click, or from the middle when a question is sent.
+      const pulseAge = still ? 2 : (now - ASK_LIVE.pulseAt) / 900;
+      const ring = pulseAge >= 0 && pulseAge < 1 ? pulseAge * cols * 0.95 : -1;
+      const ox = ASK_LIVE.pulseX * cols, oy = ASK_LIVE.pulseY * rows;
+      // A short lift in brightness on each key the visitor types.
+      const heard = still ? 0 : Math.max(0, 1 - (now - ASK_LIVE.keyAt) / 380) * 0.2;
 
       for (let y = 0; y < rows; y++) {
         const fy = y / rows;
@@ -321,19 +383,37 @@ function GlyphPortrait() {
           const i = y * cols + x;
           const base = tone[i];
           if (base < 0.05) continue;
-          let v = (base * (1 - amp + amp * Math.sin(t * rate + phase[i])) + glow * base) * fade;
+          let v = base * (1 - amp + amp * Math.sin(t * rate + phase[i])) + glow * base;
+          v *= 1 + heard;
+          let scramble = thinking && (i * 7 + frame * 3) % 13 === 0;
+          const ddx = x - px, ddy = (y - py) * 1.55;
+          const d2 = ddx * ddx + ddy * ddy;
+          if (d2 < reach * reach) v += (0.15 + base) * 0.6 * (1 - d2 / (reach * reach));
+          if (ring >= 0) {
+            const k = 1 - Math.abs(Math.hypot(x - ox, (y - oy) * 1.55) - ring) / 4;
+            if (k > 0) {
+              v += (0.3 + base) * 0.7 * k * (1 - pulseAge);
+              if (k > 0.45) scramble = true;
+            }
+          }
+          v *= fade;
           if (v > 1) v = 1;
-          const g = glyph[i] >= 0 ? glyph[i] : Math.max(1, Math.round(v * (GLYPH_RAMP - 1)));
+          const g = scramble ? 1 + ((i + frame * 5) % (GLYPH_RAMP - 1))
+            : glyph[i] >= 0 ? glyph[i] : Math.max(1, Math.round(v * (GLYPH_RAMP - 1)));
           const lv = Math.round(v * (GLYPH_LEVELS - 1));
           ctx.drawImage(atlas, g * cwD, lv * chD, cwD, chD, x * cwD, y * chD, cwD, chD);
         }
       }
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = grid.tint;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "source-over";
     };
 
     const loop = (now) => {
       raf = requestAnimationFrame(loop);
-      // About 16 frames a second follows the video and keeps it light.
-      if (now - last < 60) return;
+      // About 22 frames a second follows the video and keeps it light.
+      if (now - last < 45) return;
       last = now;
       paint(now);
     };
@@ -363,6 +443,8 @@ function GlyphPortrait() {
     return () => {
       ro.disconnect();
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerdown", onTap);
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -433,8 +515,12 @@ function AskButtons({ markers, sessionId }) {
         if (c) {
           return (
             <a key={m} className="ask-case" href={`/projects/${c.id}`}>
-              <img src={c.img} alt="" className={c.logo ? "is-logo" : undefined} width={c.logo ? 44 : 64} height="44" loading="lazy" />
-              See how I built {c.name}
+              <img src={c.img} alt="" className={c.logo ? "is-logo" : undefined} width={c.logo ? 60 : 92} height="60" loading="lazy" />
+              <span className="ask-case-text">
+                <b>{c.name}</b>
+                <span>{c.sub}</span>
+                <em>See how I built it</em>
+              </span>
             </a>
           );
         }
@@ -451,25 +537,55 @@ function AskButtons({ markers, sessionId }) {
   );
 }
 
-function AskTurn({ turn, sessionId }) {
-  const streaming = turn.status === "streaming";
-  const { paragraphs, markers } = turn.note
-    ? { paragraphs: [ASK_NOTES[turn.note]], markers: turn.note === "rate" || turn.note === "refusal" ? [] : ["contact", "resume"] }
-    : parseAnswer(turn.raw, streaming);
+/* One question and its answer. The answer is written out at a steady pace
+   instead of in the bursts it arrives in, and the portrait talks for as long
+   as that takes. */
+function AskTurn({ turn, sessionId, onGrow, onSettled }) {
+  const full = turn.note ? ASK_NOTES[turn.note] : turn.raw;
+  const instant = React.useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
+  const [shown, setShown] = React.useState(0);
+  const fullRef = React.useRef(full);
+  fullRef.current = full;
+  const waiting = turn.status === "streaming";
+  const count = instant ? full.length : Math.min(shown, full.length);
+  const revealing = waiting || count < full.length;
+
+  React.useEffect(() => {
+    if (instant || !revealing) return;
+    const timer = setInterval(() => {
+      setShown((n) => {
+        const left = fullRef.current.length - n;
+        return left <= 0 ? n : n + Math.max(2, Math.ceil(left / 40));
+      });
+    }, 30);
+    return () => clearInterval(timer);
+  }, [instant, revealing]);
+
+  React.useEffect(() => {
+    ASK_LIVE.thinking = waiting && count === 0;
+    ASK_LIVE.speaking = revealing && count > 0;
+  }, [waiting, revealing, count > 0]);
+  React.useEffect(() => { onGrow?.(); }, [count, revealing]);
+  React.useEffect(() => { if (!revealing) onSettled?.(turn.id); }, [revealing]);
+  React.useEffect(() => () => { ASK_LIVE.thinking = false; ASK_LIVE.speaking = false; }, []);
+
+  const parsed = parseAnswer(full.slice(0, count), revealing);
+  const paragraphs = parsed.paragraphs;
+  const markers = turn.note ? (turn.note === "rate" || turn.note === "refusal" ? [] : ["contact", "resume"]) : parsed.markers;
   return (
-    <div className={`ask-turn ${turn.seed ? "is-seed" : "is-new"}`}>
-      <p className="ask-q">{turn.q}</p>
+    <div className="ask-turn is-new">
+      <p className="ask-q"><span className="sr-only">You asked: </span>{turn.q}</p>
       <div className="ask-a">
-        {streaming && paragraphs.length === 0 &&
+        {revealing && paragraphs.length === 0 &&
           <span className="ask-dots" aria-label="Thinking"><span /><span /><span /></span>
         }
         {paragraphs.map((p, i) =>
           <p key={i}>
             {p}
-            {streaming && i === paragraphs.length - 1 && <span className="ask-caret" aria-hidden="true" />}
+            {revealing && i === paragraphs.length - 1 && <span className="ask-caret" aria-hidden="true" />}
           </p>
         )}
-        {!streaming && <AskButtons markers={markers} sessionId={sessionId} />}
+        {!revealing && <AskButtons markers={markers} sessionId={sessionId} />}
       </div>
     </div>
   );
@@ -480,10 +596,6 @@ function AskChat({ onActive }) {
   const [turns, setTurns] = React.useState([]);
   const [input, setInput] = React.useState("");
   const [busy, setBusy] = React.useState(false);
-  React.useEffect(() => {
-    ASK_LIVE.speaking = busy;
-    return () => { ASK_LIVE.speaking = false; };
-  }, [busy]);
   const [deal, setDeal] = React.useState(0);
   const formRef = React.useRef(null);
   const turnsRef = React.useRef(turns);
@@ -494,7 +606,16 @@ function AskChat({ onActive }) {
   React.useEffect(() => {
     const log = logRef.current;
     if (log && turns.length) log.scrollTop = log.scrollHeight;
-  }, [turns]);
+  }, [turns.length]);
+  // Follow the answer as it is written, unless the visitor has scrolled back up.
+  const follow = React.useCallback(() => {
+    const log = logRef.current;
+    if (log && log.scrollHeight - log.scrollTop - log.clientHeight < 140) log.scrollTop = log.scrollHeight;
+  }, []);
+  // A turn is settled once its answer has arrived and been written out.
+  const settle = React.useCallback((id) => {
+    if (turnsRef.current.length && turnsRef.current[turnsRef.current.length - 1].id === id) setBusy(false);
+  }, []);
 
   const patch = (id, fields) =>
     setTurns((ts) => ts.map((t) => (t.id === id ? { ...t, ...(typeof fields === "function" ? fields(t) : fields) } : t)));
@@ -514,6 +635,8 @@ function AskChat({ onActive }) {
     setTurns((ts) => [...ts, { id, q, raw: "", status: "streaming", note: null }]);
     setInput("");
     setBusy(true);
+    setDeal(0);
+    askPulse();
 
     try {
       const res = await fetch("/api/ask", {
@@ -555,13 +678,14 @@ function AskChat({ onActive }) {
     } catch {
       if (ASK_FALLBACK[q]) patch(id, { status: "done", raw: ASK_FALLBACK[q], note: null });
       else patch(id, { status: "done", note: "closed" });
-    } finally {
-      setBusy(false);
     }
   };
 
   const asked = new Set(turns.filter((t) => !t.note).map((t) => t.q));
-  const pool = ASK_PROMPTS.filter((c) => !asked.has(c));
+  const lastDone = [...turns].reverse().find((t) => t.status === "done" && !t.note);
+  const related = lastDone ? [...lastDone.raw.matchAll(ASK_MARKER_RE)].flatMap((m) => ASK_RELATED[m[1]] || []) : [];
+  const open = ASK_PROMPTS.filter((c) => !asked.has(c));
+  const pool = [...related.filter((c, i) => open.includes(c) && related.indexOf(c) === i), ...open.filter((c) => !related.includes(c))];
   const chips = pool.length <= ASK_PROMPTS_SHOWN
     ? pool
     : Array.from({ length: ASK_PROMPTS_SHOWN }, (_, i) => pool[(deal * ASK_PROMPTS_SHOWN + i) % pool.length]);
@@ -570,11 +694,12 @@ function AskChat({ onActive }) {
 
   return (
     <div className="ask-chat">
-      {hasLog &&
-        <div ref={logRef} className="ask-log" tabIndex={0} role="log" aria-live="polite" aria-busy={busy} aria-label="Conversation with the AI version of Mohammad">
-          {turns.map((t) => <AskTurn key={t.id} turn={t} sessionId={sessionId} />)}
+      <div ref={logRef} className="ask-log" tabIndex={0} role="log" aria-live="polite" aria-busy={busy} aria-label="Conversation with the AI version of Mohammad">
+        <div className="ask-turn">
+          <div className="ask-a"><p>{ASK_GREETING}</p></div>
         </div>
-      }
+        {turns.map((t) => <AskTurn key={t.id} turn={t} sessionId={sessionId} onGrow={follow} onSettled={settle} />)}
+      </div>
 
       {chips.length > 0 &&
         <div className="ask-chips">
@@ -600,9 +725,9 @@ function AskChat({ onActive }) {
           type="text"
           autoComplete="off"
           maxLength={ASK_MAX_CHARS}
-          placeholder="Ask about Mohammad"
+          placeholder="Ask me anything about my work"
           value={input}
-          onChange={(e) => setInput(e.target.value)} />
+          onChange={(e) => { ASK_LIVE.keyAt = performance.now(); setInput(e.target.value); }} />
         <button type="submit" className="ask-send" disabled={busy || !input.trim()}>Ask</button>
       </form>
 
@@ -612,14 +737,27 @@ function AskChat({ onActive }) {
 
 function ChatHome() {
   const [active, setActive] = React.useState(false);
+  // The conversation view fills the screen below the nav, whatever height the nav is.
+  React.useEffect(() => {
+    const nav = document.querySelector(".topnav");
+    if (!nav) return;
+    const set = () => document.documentElement.style.setProperty("--nav-h", `${nav.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, []);
+  React.useEffect(() => { if (active) window.scrollTo({ top: 0 }); }, [active]);
   return (
     <section id="top" className={`ask-home ${active ? "is-active" : ""}`}>
-      <div className="ask-hero">
-        <h1 className="ask-name">Mohammad Zayed</h1>
-        <p className="ask-tagline">Software engineer</p>
-        <GlyphPortrait />
+      <div className="ask-stage">
+        <div className="ask-hero">
+          <h1 className="ask-name">Mohammad Zayed</h1>
+          <p className="ask-tagline">Software engineer</p>
+          <GlyphPortrait />
+        </div>
+        <AskChat onActive={setActive} />
       </div>
-      <AskChat onActive={setActive} />
       <div className="ask-side-actions">
         <a className="ask-action" href="/resume" target="_blank" rel="noopener noreferrer">Resume</a>
         <button type="button" className="ask-action" data-track="talk-to-real-me" onClick={jumpToContact}>Talk to the real me</button>
