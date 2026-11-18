@@ -150,6 +150,7 @@ ${body}
   </div>
 </footer>
 <script src="/track.js${v}" defer></script>
+<script src="/ph.js${v}" defer></script>
 </body>
 </html>
 `;

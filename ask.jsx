@@ -486,7 +486,7 @@ function AskLeadForm({ sessionId }) {
       <label htmlFor={inputId} className="sr-only">Your email</label>
       <input
         id={inputId}
-        className="ask-input"
+        className="ask-input ph-no-capture"
         type="email"
         required
         maxLength={254}
@@ -721,7 +721,7 @@ function AskChat({ onActive }) {
         <label htmlFor="ask-input" className="sr-only">Your question</label>
         <input
           id="ask-input"
-          className="ask-input"
+          className="ask-input ph-no-capture"
           type="text"
           autoComplete="off"
           maxLength={ASK_MAX_CHARS}
