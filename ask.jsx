@@ -10,20 +10,18 @@ const ASK_MAX_CHARS = 500;
 // credit, an outage), so the suggested questions always work. Every fact here
 // comes from twin/knowledge.md; keep the two in step.
 const ASK_FALLBACK = {
-  "What did you build for Chick-fil-A?":
-    "Two things. LineReady is the app my store runs on: food-safety checks, training with videos, checklists, scheduling, team messaging and our team points system. 40 team members use it, and leaders use it every shift.\n\nI also built our store's website at cfafoothill.com. Guests get careers, catering and community pages, and the team side handles requests like time-punch fixes and sick pay. [[case:lineready]]",
+  "What's your favorite project?":
+    "LineReady. It's the app my own Chick-fil-A runs on, so I'm my own first user. I built it for the people I work next to, which is why it's in English and Spanish and why a new hire joins with just an invite code.\n\nUnder the hood, each store's data is kept separate in Postgres with row-level security, and it ships on the iOS App Store and the web from one codebase. [[case:lineready]]",
   "What roles are you looking for?":
     "Full-time software engineering roles starting after I graduate in May 2027.\n\nI'll relocate anywhere, I'm happy to work in person, and I don't need visa sponsorship. [[resume]]",
-  "Which project are you proudest of?":
-    "LineReady. It's the app my own Chick-fil-A runs on, so I'm my own first user. I built it for the people I work next to, which is why it's in English and Spanish and why a new hire joins with just an invite code.\n\nUnder the hood, each store's data is kept separate in Postgres with row-level security, and it ships on the iOS App Store and the web from one codebase. [[case:lineready]]",
-  "Show me LockedIn":
-    "LockedIn is a nutrition and GLP-1 tracker: meal and macro logging, barcode scanning, food search, dose logging, titration schedules and dose-vs-weight charts. It's in English, Spanish and Arabic, including right-to-left layout.\n\nIt's still in development and not publicly released yet. [[case:lockedin]]",
   "What's your background?":
     "I'm a Director at the Chick-fil-A in Foothill Ranch, California. I started there in March 2022 as a Team Member and have been a Director since June 2024. I write the software my store runs on.\n\nI'm finishing a B.S. in Computer Science at Cal State Long Beach and graduate in May 2027. I've been programming for about 5 years. [[resume]]",
+  "What did you build for Chick-fil-A?":
+    "Two things. LineReady is the app my store runs on: food-safety checks, training with videos, checklists, scheduling, team messaging and our team points system. 40 team members use it, and leaders use it every shift.\n\nI also built our store's website at cfafoothill.com. Guests get careers, catering and community pages, and the team side handles requests like time-punch fixes and sick pay. [[case:lineready]]",
+  "Show me LockedIn":
+    "LockedIn is a nutrition and GLP-1 tracker: meal and macro logging, barcode scanning, food search, dose logging, titration schedules and dose-vs-weight charts. It's in English, Spanish and Arabic, including right-to-left layout.\n\nIt's still in development and not publicly released yet. [[case:lockedin]]",
   "Where can I try your apps?":
     "LineReady is at linereadyapp.com and on the iOS App Store. Mini Golf Score Tracker is at minigolfscoretracker.com and on the App Store too. My store's website is cfafoothill.com.\n\nLockedIn isn't publicly released yet. [[case:minigolf]]",
-  "Tell me about the security hole you closed":
-    "I found a production hole in LineReady: invite tokens were readable by clients that weren't signed in. I locked the table behind row-level security and moved the lookup into a scoped RPC.\n\nThen I verified the fix end to end as an anonymous client, the same way an attacker would come at it. The lesson: test your security as the attacker, not as yourself. [[case:lineready]]",
   "How did you speed up food search?":
     "In LockedIn, search over 321,737 foods was slow: \"banana\" took 5,607 ms. The filter used strpos(), which Postgres can't serve from an index, so every search scanned the whole table. I swapped it for an indexed ILIKE and it dropped to 223 ms.\n\nI fixed ranking while I was in there, so plain staples beat branded products. \"Chicken breast\" went from result #1296 to #1. [[case:lockedin]]",
   "What's your stack?":
@@ -46,12 +44,12 @@ const ASK_GREETING_HIRING = "Hiring? Ask what I'd bring to your team.";
 
 // After an answer, the suggested questions that follow on from it are offered first.
 const ASK_RELATED = {
-  "case:lineready": ["Tell me about the security hole you closed", "What's your stack?", "Where can I try your apps?"],
+  "case:lineready": ["What's your stack?", "Where can I try your apps?", "What's your background?"],
   "case:lockedin": ["How did you speed up food search?", "What's your stack?", "Where can I try your apps?"],
-  "case:minigolf": ["Where can I try your apps?", "What's your stack?", "Which project are you proudest of?"],
+  "case:minigolf": ["Where can I try your apps?", "What's your stack?", "What's your favorite project?"],
   "case:cfa-site": ["What did you build for Chick-fil-A?", "What's your background?", "What's your stack?"],
-  resume: ["What's your background?", "Which project are you proudest of?", "How do I reach you?"],
-  contact: ["What roles are you looking for?", "What's your background?", "Which project are you proudest of?"],
+  resume: ["What's your background?", "What's your favorite project?", "How do I reach you?"],
+  contact: ["What roles are you looking for?", "What's your background?", "What's your favorite project?"],
 };
 
 const ASK_MARKER_RE = /\[\[(case:[a-z-]+|resume|contact|lead)\]\]/g;
