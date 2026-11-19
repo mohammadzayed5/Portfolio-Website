@@ -22,8 +22,6 @@ const ASK_FALLBACK = {
     "LockedIn is a nutrition and GLP-1 tracker: meal and macro logging, barcode scanning, food search, dose logging, titration schedules and dose-vs-weight charts. It's in English, Spanish and Arabic, including right-to-left layout.\n\nIt's still in development and not publicly released yet. [[case:lockedin]]",
   "Where can I try your apps?":
     "LineReady is at linereadyapp.com and on the iOS App Store. Mini Golf Score Tracker is at minigolfscoretracker.com and on the App Store too. My store's website is cfafoothill.com.\n\nLockedIn isn't publicly released yet. [[case:minigolf]]",
-  "How did you speed up food search?":
-    "In LockedIn, search over 321,737 foods was slow: \"banana\" took 5,607 ms. The filter used strpos(), which Postgres can't serve from an index, so every search scanned the whole table. I swapped it for an indexed ILIKE and it dropped to 223 ms.\n\nI fixed ranking while I was in there, so plain staples beat branded products. \"Chicken breast\" went from result #1296 to #1. [[case:lockedin]]",
   "What's your stack?":
     "Mostly React and Vite on the front end, with Capacitor to ship the same code to iOS. On the back end, Flask, PostgreSQL and Supabase with row-level security.\n\nLanguages: Python, JavaScript, Java, C++, C and SQL. [[resume]]",
   "How do I reach you?":
@@ -34,7 +32,7 @@ const ASK_PROMPTS_SHOWN = 3;
 
 const ASK_CASES = {
   "case:lineready": { id: "lineready", name: "LineReady", sub: "Restaurant operations app, iOS and web", stat: "40 team members use it", img: "assets/shots/lineready-cover.jpg" },
-  "case:lockedin": { id: "lockedin", name: "LockedIn", sub: "Nutrition and GLP-1 tracker", stat: "Food search: 5,607 ms to 223 ms", img: "assets/shots/lockedin-site.jpg" },
+  "case:lockedin": { id: "lockedin", name: "LockedIn", sub: "Nutrition and GLP-1 tracker", stat: "English, Spanish and Arabic", img: "assets/shots/lockedin-site.jpg" },
   "case:minigolf": { id: "minigolf", name: "Mini Golf", sub: "Multiplayer scorekeeping, iOS and web", stat: "Live on the App Store and the web", img: "assets/shots/golf-cover.jpg" },
   "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", sub: "Store website and team portal", stat: "Public site and team portal in one deploy", img: "assets/shots/cfa-cover.jpg" },
 };
@@ -45,7 +43,7 @@ const ASK_GREETING_HIRING = "Hiring? Ask what I'd bring to your team.";
 // After an answer, the suggested questions that follow on from it are offered first.
 const ASK_RELATED = {
   "case:lineready": ["What's your stack?", "Where can I try your apps?", "What's your background?"],
-  "case:lockedin": ["How did you speed up food search?", "What's your stack?", "Where can I try your apps?"],
+  "case:lockedin": ["What's your stack?", "Where can I try your apps?", "What's your favorite project?"],
   "case:minigolf": ["Where can I try your apps?", "What's your stack?", "What's your favorite project?"],
   "case:cfa-site": ["What did you build for Chick-fil-A?", "What's your background?", "What's your stack?"],
   resume: ["What's your background?", "What's your favorite project?", "How do I reach you?"],

@@ -46,7 +46,7 @@ const PROJECTS = [
     icon: "target",
     cover: "assets/shots/lockedin-site.jpg",
     avatar: "images/Lockedinimage.png",
-    short: "Nutrition and GLP-1 tracker in English, Spanish and Arabic. Food search over 321,737 rows went from 5,607 ms to 223 ms.",
+    short: "Nutrition and GLP-1 tracker in English, Spanish and Arabic. Meal logging, barcode scanning, dose schedules and weight charts in one app.",
     color: "#3b82f6",
     liveUrl: "https://lockedintracker.com/",
     stack: ["React 19", "Vite", "Flask", "Supabase (Postgres RLS)", "Capacitor", "RevenueCat", "PostHog", "i18n (en/es/ar)"],
@@ -55,17 +55,17 @@ const PROJECTS = [
     overview:
       "A nutrition and GLP-1 tracker for people who already know what they're doing: no streaks, no nagging. Meal and macro logging, barcode scanning, food search, dose logging, titration schedules, injection-site rotation, and dose-vs-weight charts. It's in English, Spanish and Arabic, including right-to-left layout for Arabic.",
     problem:
-      "Food search over a 321,737-row public nutrition dataset was slow: a search for \"banana\" took 5,607 ms. The filter used strpos(), which Postgres can't serve from an index, so every search scanned the table.",
+      "Most people on a GLP-1 end up with a food app, a notes file for doses, and something else for weight. I wanted the meal log, the dose schedule and the weight chart on the same screen, without streaks or nagging, and usable in Arabic as well as English and Spanish.",
     approach: [
-      "Swapped the strpos() filter for an indexed ILIKE, which took the \"banana\" search from 5,607 ms to 223 ms.",
-      "Fixed ranking so plain staples beat branded products: \"chicken breast\" went from result #1296 to #1.",
+      "Food search over a public nutrition dataset of 321,737 foods, plus barcode scanning.",
+      "Dose logging with titration schedules, injection-site rotation and dose-vs-weight charts.",
       "React 19 + Vite frontend, a Flask API, and Supabase Postgres with row-level security.",
       "Full localization in English, Spanish and Arabic, including right-to-left layout.",
       "Subscription paywall through RevenueCat, plus write-once creator-code attribution validated on the server.",
     ],
     metrics: [
-      { v: "5,607 → 223 ms", l: "food search" },
-      { v: "321,737", l: "rows searched" },
+      { v: "321,737", l: "foods searchable" },
+      { v: "iOS + Web", l: "one codebase" },
       { v: "3", l: "languages, incl. RTL" },
     ],
     images: ["assets/shots/lockedin-diary.jpg"],

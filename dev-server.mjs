@@ -28,7 +28,7 @@ const limitStore = {
 
 function fakeClient() {
   const reply = (q) => {
-    if (/lockedin/i.test(q)) return 'Local test reply, no API key set. LockedIn is my nutrition and GLP-1 tracker.\n\nFood search went from 5,607 ms to 223 ms. [[case:lockedin]]';
+    if (/lockedin/i.test(q)) return 'Local test reply, no API key set. LockedIn is my nutrition and GLP-1 tracker.\n\nIt's in English, Spanish and Arabic. [[case:lockedin]]';
     if (/hiring|recruit|role for/i.test(q)) return 'Local test reply, no API key set. Leave your email and I will follow up. [[lead]]';
     if (/reach|contact|email/i.test(q)) return 'Local test reply, no API key set. LinkedIn is the fastest way to reach me. [[contact]] [[resume]]';
     return 'Local test reply, no API key set. Ask me about LineReady, the app my Chick-fil-A runs on.\n\nThis second paragraph shows the muted style. [[case:lineready]]';
