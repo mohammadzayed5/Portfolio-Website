@@ -394,7 +394,8 @@ function GlyphPortrait() {
           v *= fade;
           if (v > 1) v = 1;
           const g = scramble ? 1 + ((i + frame * 5) % (GLYPH_RAMP - 1))
-            : glyph[i] >= 0 ? glyph[i] : Math.max(1, Math.round(v * (GLYPH_RAMP - 1)));
+            // Dark areas (hair) keep fairly dense characters, just dimmer, so they read as a mass.
+            : glyph[i] >= 0 ? glyph[i] : Math.max(1, Math.round((0.38 + 0.62 * v) * (GLYPH_RAMP - 1)));
           const lv = Math.round(v * (GLYPH_LEVELS - 1));
           ctx.drawImage(atlas, g * cwD, lv * chD, cwD, chD, x * cwD, y * chD, cwD, chD);
         }
