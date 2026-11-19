@@ -6,7 +6,7 @@ const PROJECTS = [
     name: "LineReady",
     tag: "Multi-Tenant SaaS · iOS + Web",
     icon: "layers",
-    cover: null,
+    cover: "assets/shots/lineready-cover.jpg",
     avatar: "images/LineReadyLogo.png",
     short: "Multi-tenant restaurant operations platform I built for my own Chick-fil-A. Leaders use it every shift for food-safety checks and our team points system.",
     status: "Live",
@@ -32,17 +32,23 @@ const PROJECTS = [
       { v: "Every shift", l: "food-safety checks + team points" },
       { v: "iOS + Web", l: "one codebase" },
     ],
-    images: [],
+    images: [
+      "assets/shots/lineready-lineup.jpg",
+      "assets/shots/lineready-checklists.jpg",
+      "assets/shots/lineready-food-safety.jpg",
+      "assets/shots/lineready-open.jpg"
+    ],
   },
   {
     id: "lockedin",
     name: "LockedIn",
     tag: "iOS + Web · Nutrition + GLP-1 Tracking",
     icon: "target",
-    cover: null,
+    cover: "assets/shots/lockedin-site.jpg",
     avatar: "images/Lockedinimage.png",
     short: "Nutrition and GLP-1 tracker in English, Spanish and Arabic. Food search over 321,737 rows went from 5,607 ms to 223 ms.",
     color: "#3b82f6",
+    liveUrl: "https://lockedintracker.com/",
     stack: ["React 19", "Vite", "Flask", "Supabase (Postgres RLS)", "Capacitor", "RevenueCat", "PostHog", "i18n (en/es/ar)"],
     year: "2026",
     role: "Solo, founder of Zayed Software LLC",
@@ -62,19 +68,14 @@ const PROJECTS = [
       { v: "321,737", l: "rows searched" },
       { v: "3", l: "languages, incl. RTL" },
     ],
-    images: [
-      "assets/LockedinHomeScreen.png",
-      "assets/LockedinDashboard.png",
-      "assets/LockedinLog.png",
-      "assets/LoeckdinProgress.png"
-    ],
+    images: ["assets/shots/lockedin-diary.jpg"],
   },
   {
     id: "minigolf",
     name: "Mini Golf Score Tracker",
     tag: "Full-Stack Web + iOS App",
     icon: "golf",
-    cover: null,
+    cover: "assets/shots/golf-cover.jpg",
     avatar: "images/Minigolfball.jpg",
     short: "Multiplayer mini golf scorekeeping, so nobody argues over a paper scorecard. Live on the iOS App Store and the web.",
     status: "Live",
@@ -106,7 +107,7 @@ const PROJECTS = [
     name: "Chick-fil-A Foothill Ranch Website",
     tag: "Public Site + Team Portal",
     icon: "store",
-    cover: null,
+    cover: "assets/shots/cfa-cover.jpg",
     avatar: "images/CFApic.jpg",
     short: "My store's public website plus an internal team portal in one deploy, built with static HTML, CSS and JavaScript.",
     status: "Live",
@@ -130,12 +131,11 @@ const PROJECTS = [
       { v: "2", l: "languages" },
     ],
     images: [
-      "assets/CFAWebsiteHome.png",
-      "assets/CFAwebsiteLocation.png",
-      "assets/CFAwebsiteCommunity.png",
-      "assets/CFATMportalhome.png",
-      "assets/CFAteamportalTM.png",
-      "assets/CFAtmportalLeader.png"
+      "assets/shots/cfa-location.jpg",
+      "assets/shots/cfa-community.jpg",
+      "assets/shots/cfa-portal.jpg",
+      "assets/shots/cfa-team.jpg",
+      "assets/shots/cfa-leaders.jpg"
     ],
   },
 ];
@@ -146,7 +146,7 @@ const EXPERIENCE = [
     org: "Zayed Software LLC",
     period: "Jul 2026 - Present",
     bullets: [
-      "I founded it to hold the apps I build. It's me, no employees.",
+      "I founded it to hold the apps I build. It's just me.",
     ],
   },
   {

@@ -35,13 +35,14 @@ const ASK_PROMPTS = Object.keys(ASK_FALLBACK);
 const ASK_PROMPTS_SHOWN = 3;
 
 const ASK_CASES = {
-  "case:lineready": { id: "lineready", name: "LineReady", sub: "Restaurant operations app, iOS and web", img: "images/LineReadyLogo.png", logo: true },
-  "case:lockedin": { id: "lockedin", name: "LockedIn", sub: "Nutrition and GLP-1 tracker", img: "assets/LockedinDashboard.png" },
-  "case:minigolf": { id: "minigolf", name: "Mini Golf", sub: "Multiplayer scorekeeping, iOS and web", img: "assets/golf-home.png" },
-  "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", sub: "Store website and team portal", img: "assets/CFAWebsiteHome.png" },
+  "case:lineready": { id: "lineready", name: "LineReady", sub: "Restaurant operations app, iOS and web", stat: "40 team members use it", img: "assets/shots/lineready-cover.jpg" },
+  "case:lockedin": { id: "lockedin", name: "LockedIn", sub: "Nutrition and GLP-1 tracker", stat: "Food search: 5,607 ms to 223 ms", img: "assets/shots/lockedin-site.jpg" },
+  "case:minigolf": { id: "minigolf", name: "Mini Golf", sub: "Multiplayer scorekeeping, iOS and web", stat: "Live on the App Store and the web", img: "assets/shots/golf-cover.jpg" },
+  "case:cfa-site": { id: "cfa", name: "Chick-fil-A site", sub: "Store website and team portal", stat: "Public site and team portal in one deploy", img: "assets/shots/cfa-cover.jpg" },
 };
 
 const ASK_GREETING = "Hi, I'm an AI version of Mohammad. Ask me about what I've built or the roles I'm looking for.";
+const ASK_GREETING_HIRING = "Hiring? Ask what I'd bring to your team.";
 
 // After an answer, the suggested questions that follow on from it are offered first.
 const ASK_RELATED = {
@@ -108,7 +109,7 @@ const GLYPH_LEVELS = 12;
 
 /* A short video of me, cut out of its backdrop and redrawn in characters, so
    the chat reads as a conversation with an AI version of me. An idle loop
-   plays normally and a talking loop plays while an answer is streaming.
+   plays normally and a talking loop plays while an answer is being written out.
    Each cell gets a tone (how bright) and a glyph: flat areas use the density
    ramp, edges (jaw, brows, eyes, collar, outline) use a stroke that follows
    the edge direction. That is what makes a face read at this size.
@@ -144,14 +145,6 @@ function GlyphPortrait() {
     if (!still) {
       window.addEventListener("pointermove", onMove, { passive: true });
       canvas.addEventListener("pointerdown", onTap);
-    }
-
-    // Open just before the smile in the idle loop, so that is the first thing a visitor sees.
-    const IDLE_START = 4.0;
-    const cue = () => { try { idle.currentTime = IDLE_START; } catch {} };
-    if (idle && !still) {
-      if (idle.readyState >= 1) cue();
-      else idle.addEventListener("loadedmetadata", cue, { once: true });
     }
 
     const playing = (v) => v && v.readyState >= 2 && !v.paused;
@@ -220,7 +213,7 @@ function GlyphPortrait() {
       let cw = sw, ch = sh;
       if (sw / sh > want) cw = sh * want; else ch = sw / want;
       // Move in on the head and shoulders so the face is the biggest thing drawn.
-      cw /= 1.3; ch /= 1.3;
+      cw /= 1.12; ch /= 1.12;
       sctx.drawImage(source, (sw - cw) / 2, sh * 0.02, cw, ch, 0, 0, cols, rows);
       let data;
       try {
@@ -229,12 +222,13 @@ function GlyphPortrait() {
         return false;
       }
 
-      // 1. Brightness, and which cells look like the wall: bright and nearly colourless.
+      // 1. Brightness, and which cells are backdrop. The clips are cut out onto pure
+      // white ahead of time, and nothing on me is that bright.
       for (let i = 0; i < n; i++) {
         const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
         const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
         lum[i] = (0.45 * r + 0.45 * g + 0.1 * b) / 255;
-        wall[i] = mn > 138 && mx - mn < 34 ? 1 : 0;
+        wall[i] = mn > 243 ? 1 : 0;
       }
       // Only wall that connects to the top or side edges is backdrop, so
       // eye whites and teeth stay part of the face.
@@ -275,8 +269,9 @@ function GlyphPortrait() {
       grid.lo = grid.lo < 0 ? lo : grid.lo + (lo - grid.lo) * 0.15;
       grid.hi = grid.hi < 0 ? hi : grid.hi + (hi - grid.hi) * 0.15;
       const span = Math.max(0.05, grid.hi - grid.lo);
-      // The 0.75 power lifts dark hair and a dark shirt so they still show.
-      for (let i = 0; i < n; i++) lum[i] = Math.pow(Math.min(1, Math.max(0, (lum[i] - grid.lo) / span)), 0.7);
+      // The footage is evenly lit and the shirt is white, so the range is
+      // left close to linear: skin sits in the middle and the features read against it.
+      for (let i = 0; i < n; i++) lum[i] = Math.pow(Math.min(1, Math.max(0, (lum[i] - grid.lo) / span)), 0.95);
 
       // 3. Local contrast: push each cell away from its neighbourhood average,
       //    which brings out eyes, brows and the mouth.
@@ -285,7 +280,7 @@ function GlyphPortrait() {
           let sum = 0;
           for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) sum += at(lum, x + dx, y + dy);
           const v = lum[y * cols + x];
-          sharp[y * cols + x] = Math.min(1, Math.max(0, v + 1.5 * (v - sum / 25)));
+          sharp[y * cols + x] = Math.min(1, Math.max(0, v + 1.9 * (v - sum / 25)));
         }
       }
 
@@ -306,7 +301,7 @@ function GlyphPortrait() {
           const [ox, oy] = sobel(mask, x, y);
           const outline = Math.hypot(ox, oy);
           if (m < 0.35 && outline < 0.9) continue;
-          let t = m * (0.2 + 0.8 * Math.pow(sharp[i], 1.05));
+          let t = m * (0.3 + 0.7 * Math.pow(sharp[i], 1.15));
           const [gx, gy] = sobel(lum, x, y);
           const inner = Math.hypot(gx, gy) * m;
           let ex = gx, ey = gy, strength = inner;
@@ -515,10 +510,11 @@ function AskButtons({ markers, sessionId }) {
         if (c) {
           return (
             <a key={m} className="ask-case" href={`/projects/${c.id}`}>
-              <img src={c.img} alt="" className={c.logo ? "is-logo" : undefined} width={c.logo ? 60 : 92} height="60" loading="lazy" />
+              <img src={"/" + c.img} alt={c.name + " screenshot"} width="320" height="200" loading="lazy" />
               <span className="ask-case-text">
                 <b>{c.name}</b>
                 <span>{c.sub}</span>
+                <strong>{c.stat}</strong>
                 <em>See how I built it</em>
               </span>
             </a>
@@ -540,7 +536,29 @@ function AskButtons({ markers, sessionId }) {
 /* One question and its answer. The answer is written out at a steady pace
    instead of in the bursts it arrives in, and the portrait talks for as long
    as that takes. */
-function AskTurn({ turn, sessionId, onGrow, onSettled }) {
+function AskCopy({ text }) {
+  const [done, setDone] = React.useState(false);
+  if (!navigator.clipboard) return null;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setDone(true);
+      setTimeout(() => setDone(false), 1600);
+    } catch {}
+  };
+  return (
+    <button type="button" className="ask-tool" data-track="copy-answer" onClick={copy} aria-live="polite">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        {done
+          ? <path d="M3 8.5l3.2 3.2L13 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          : <path d="M5.5 5.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M3.5 5.5h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />}
+      </svg>
+      {done ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+function AskTurn({ turn, sessionId, offerLead, onGrow, onSettled }) {
   const full = turn.note ? ASK_NOTES[turn.note] : turn.raw;
   const instant = React.useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
   const [shown, setShown] = React.useState(0);
@@ -586,10 +604,21 @@ function AskTurn({ turn, sessionId, onGrow, onSettled }) {
           </p>
         )}
         {!revealing && <AskButtons markers={markers} sessionId={sessionId} />}
+        {!revealing && offerLead && !markers.includes("lead") &&
+          <div className="ask-offer">
+            <p>Want me to follow up myself? Leave your email and I'll reply.</p>
+            <AskLeadForm sessionId={sessionId} />
+          </div>
+        }
+        {!revealing && !turn.note && paragraphs.length > 0 &&
+          <div className="ask-tools"><AskCopy text={paragraphs.join("\n\n")} /></div>
+        }
       </div>
     </div>
   );
 }
+
+const ASK_OFFER_AFTER = 3;
 
 function AskChat({ onActive }) {
   const sessionId = React.useMemo(askSessionId, []);
@@ -690,15 +719,20 @@ function AskChat({ onActive }) {
     ? pool
     : Array.from({ length: ASK_PROMPTS_SHOWN }, (_, i) => pool[(deal * ASK_PROMPTS_SHOWN + i) % pool.length]);
   const hasLog = turns.length > 0;
+  // After the third answered question, offer the email box once, unless an answer already did.
+  const answered = turns.filter((t) => t.status === "done" && !t.note);
+  const offerId = answered.length >= ASK_OFFER_AFTER && !answered.slice(0, ASK_OFFER_AFTER).some((t) => t.raw.includes("[[lead]]"))
+    ? answered[ASK_OFFER_AFTER - 1].id : null;
+  const reset = () => { setTurns([]); setBusy(false); setDeal(0); setInput(""); };
   React.useEffect(() => { onActive?.(hasLog); }, [hasLog]);
 
   return (
     <div className="ask-chat">
       <div ref={logRef} className="ask-log" tabIndex={0} role="log" aria-live="polite" aria-busy={busy} aria-label="Conversation with the AI version of Mohammad">
         <div className="ask-turn">
-          <div className="ask-a"><p>{ASK_GREETING}</p></div>
+          <div className="ask-a"><p>{ASK_GREETING}</p><p className="ask-hiring">{ASK_GREETING_HIRING}</p></div>
         </div>
-        {turns.map((t) => <AskTurn key={t.id} turn={t} sessionId={sessionId} onGrow={follow} onSettled={settle} />)}
+        {turns.map((t) => <AskTurn key={t.id} turn={t} sessionId={sessionId} offerLead={t.id === offerId} onGrow={follow} onSettled={settle} />)}
       </div>
 
       {chips.length > 0 &&
@@ -714,6 +748,9 @@ function AskChat({ onActive }) {
           {chips.map((c) =>
             <button key={c} type="button" className="ask-chip" disabled={busy} onClick={() => ask(c, "prompt")}>{c}</button>
           )}
+          {hasLog &&
+            <button type="button" className="ask-tool ask-reset" disabled={busy} data-track="start-over" onClick={reset}>Start over</button>
+          }
         </div>
       }
 

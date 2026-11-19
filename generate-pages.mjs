@@ -75,9 +75,9 @@ const crumbs = (...items) => ({
 });
 
 /** Shared shell: head, top nav (same as the home page), footer. */
-function layout({ path, title, desc, ogType = 'website', ogImage, jsonLd = [], active, body }) {
+function layout({ path, title, desc, ogType = 'website', ogImage, jsonLd = [], active, body, wide = false }) {
   const url = `${SITE}${path}`;
-  const image = ogImage || `${SITE}/assets/headshot.jpg`;
+  const image = ogImage || `${SITE}/assets/og.jpg`;
   const link = (href, label, key) =>
     `<a href="${href}" class="topnav-link${active === key ? ' is-active' : ''}"${active === key ? ' aria-current="page"' : ''}>${label}</a>`;
   return `<!DOCTYPE html>
@@ -134,7 +134,7 @@ ${jsonLd.map((j) => `<script type="application/ld+json">\n${JSON.stringify(j, nu
   <span class="topnav-status"><span class="topnav-status-dot" aria-hidden="true"></span>${STATUS}</span>
 </nav>
 
-<main class="page">
+<main class="page${wide ? ' page-wide' : ''}">
 ${body}
 </main>
 
@@ -179,7 +179,9 @@ function renderCaseStudy(p) {
       <span><b>Role</b> ${esc(p.role)}</span>${p.year ? `\n      <span><b>Year</b> ${esc(p.year)}</span>` : ''}
     </div>
   </header>
-
+${p.cover ? `
+  <figure class="cover"><img src="/${attr(p.cover)}" alt="${attr(p.name)}" width="1600" height="1000" decoding="async" /></figure>
+` : ''}
 ${[
     sec('Overview', `      <p>${esc(p.overview)}</p>`),
     sec('The problem', `      <p>${esc(p.problem)}</p>`),
@@ -188,7 +190,7 @@ ${[
       </ul>`),
     (p.metrics || []).length ? sec('By the numbers', `      ${stats('metrics', p.metrics)}`) : '',
     (p.images || []).length ? sec('Screenshots', `      <div class="gallery">
-        ${p.images.map((img) => `<img src="/${attr(img)}" alt="${attr(p.name)} screenshot" loading="lazy" decoding="async" />`).join('\n        ')}
+        ${p.images.map((img) => `<a href="/${attr(img)}" target="_blank" rel="noopener"><img src="/${attr(img)}" alt="${attr(p.name)} screenshot" loading="lazy" decoding="async" /></a>`).join('\n        ')}
       </div>`) : '',
     sec('Built with', `      <p class="stack">${(p.stack || []).map(esc).join(' · ')}</p>`),
     links.length ? sec('Links', `      <div class="link-row" style="margin-top:-10px">
@@ -203,7 +205,7 @@ ${[
     title: `${p.name} | Mohammad Zayed`,
     desc: metaDescription(p),
     ogType: 'article',
-    ogImage: p.images?.[0] ? `${SITE}/${p.images[0]}` : undefined,
+    ogImage: (p.cover || p.images?.[0]) ? `${SITE}/${p.cover || p.images[0]}` : undefined,
     jsonLd: [crumbs(['Projects', `${SITE}/projects`], [p.name, `${SITE}/projects/${p.id}`])],
     active: 'projects',
     body,
@@ -228,6 +230,7 @@ function renderProjects() {
           ${links.map((l) => `<a href="${attr(l.href)}" target="_blank" rel="noopener">${esc(l.label)} &#8599;</a>`).join('\n          ')}
         </div>
       </div>
+      ${p.cover ? `<a class="prow-cover" href="/projects/${p.id}" tabindex="-1" aria-hidden="true"><img src="/${attr(p.cover)}" alt="" width="1600" height="1000" loading="${i ? 'lazy' : 'eager'}" decoding="async" /></a>` : ''}
     </li>`;
   }).join('\n');
 
@@ -256,6 +259,7 @@ ${rows}
       },
     ],
     active: 'projects',
+    wide: true,
     body,
   });
 }
@@ -278,7 +282,8 @@ function renderAbout() {
   const EXPERIENCE = window.EXPERIENCE || [];
   const SKILL_GROUPS = window.SKILL_GROUPS || [];
 
-  const body = `  <header class="page-head">
+  const body = `  <header class="page-head has-photo">
+    <img class="page-photo" src="/assets/headshot.webp" alt="Mohammad Zayed" width="800" height="1067" decoding="async" />
     <p class="page-eyebrow">About</p>
     <h1 class="page-title">I'm Mohammad <em>Zayed</em>.</h1>
     <p class="page-lede">I'm a Director at the Chick-fil-A in Foothill Ranch, California, and I write the software my store runs on. I'm finishing a B.S. in Computer Science at Cal State Long Beach and I graduate in May 2027.</p>

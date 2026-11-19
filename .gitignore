@@ -69,3 +69,5 @@ TODO-mohammad.md
 # Raw phone recordings (the site uses the small portrait-*.mp4 cuts)
 assets/*.MOV
 assets/*.mov
+assets/raw/
+assets/raw-damaged/
