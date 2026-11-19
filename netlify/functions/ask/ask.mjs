@@ -32,14 +32,22 @@ const bareHost = (host) => host.toLowerCase().replace(/^www\./, '');
 const LIMITS = {
   // No per-visit question limit. The per-visitor and site-wide daily caps
   // below are what bound cost.
-  historyMessages: 14,
+  // The page sends the last 3 exchanges plus the new question. Longer
+  // histories (an older copy of the page) are trimmed to the most recent 7.
+  historyMessages: 7,
+  historyAccepted: 14,
+  assistantChars: 1500,
   inputChars: 500,
   maxOutputTokens: num('ASK_MAX_OUTPUT_TOKENS', 700),
   dailyTotal: num('ASK_DAILY_CAP', 300),
   ipPerDay: num('ASK_IP_DAILY_CAP', 40),
   ipPerMinute: num('ASK_IP_MINUTE_CAP', 6),
   leadsPerSession: 2,
+  leadsPerIpDay: 5,
+  leadsDailyTotal: num('ASK_LEADS_DAILY_CAP', 100),
   eventsPerMinute: 40,
+  eventsPerIpDay: 300,
+  eventsDailyTotal: num('ASK_EVENTS_DAILY_CAP', 20000),
 };
 
 // The UI parses these markers, so the contract lives next to the code that
@@ -114,16 +122,19 @@ async function bump(store, key, n) {
 }
 
 function validateMessages(raw) {
-  if (!Array.isArray(raw) || raw.length === 0 || raw.length > LIMITS.historyMessages) return null;
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > LIMITS.historyAccepted) return null;
+  // Keep only the most recent messages; an odd count keeps the visitor's turn first.
+  if (raw.length > LIMITS.historyMessages) raw = raw.slice(-LIMITS.historyMessages);
   const out = [];
   for (let i = 0; i < raw.length; i++) {
     const m = raw[i];
     const role = i % 2 === 0 ? 'user' : 'assistant';
     if (!m || m.role !== role || typeof m.content !== 'string') return null;
-    const content = m.content.trim();
+    let content = m.content.trim();
     if (!content) return null;
     if (role === 'user' && content.length > LIMITS.inputChars) return null;
-    if (role === 'assistant' && content.length > 4000) return null;
+    // Earlier answers come back from the browser, so they are cut to size, not trusted.
+    if (role === 'assistant') content = content.slice(0, LIMITS.assistantChars);
     out.push({ role, content });
   }
   if (out[out.length - 1].role !== 'user') return null;
@@ -262,9 +273,13 @@ export function createHandler(deps = {}) {
       if (!['visit', 'click', 'leave'].includes(event) || visitor.device === 'bot') return quiet;
       try {
         const key = `ev/${Math.floor(Date.now() / 60000)}/${ipHash}`;
-        const n = await readCount(store, key);
-        if (n >= LIMITS.eventsPerMinute) return quiet;
-        await bump(store, key, n);
+        const dayKey = `evday/${day}/${ipHash}`;
+        const allKey = `evtotal/${day}`;
+        const [n, perDay, all] = await Promise.all([readCount(store, key), readCount(store, dayKey), readCount(store, allKey)]);
+        // Past any of these the event is dropped quietly: per visitor per minute,
+        // per visitor per day, and for the whole site per day.
+        if (n >= LIMITS.eventsPerMinute || perDay >= LIMITS.eventsPerIpDay || all >= LIMITS.eventsDailyTotal) return quiet;
+        await Promise.all([bump(store, key, n), bump(store, dayKey, perDay), bump(store, allKey, all)]);
 
         // The network name is looked up once per visitor per day, on a page visit.
         let net = null;
@@ -312,10 +327,13 @@ export function createHandler(deps = {}) {
       }
       try {
         const leadKey = `lead/${day}/${sessionId}`;
-        const ipKey = `ip/${day}/${ipHash}`;
-        const [leads, ipCount] = await Promise.all([readCount(store, leadKey), readCount(store, ipKey)]);
-        if (leads >= LIMITS.leadsPerSession || ipCount >= LIMITS.ipPerDay) return json(429, { error: 'rate' });
-        await bump(store, leadKey, leads);
+        // The session id comes from the browser, so the limits that hold are the
+        // ones per visitor and for the whole site.
+        const ipKey = `leadip/${day}/${ipHash}`;
+        const allKey = `leadtotal/${day}`;
+        const [leads, ipCount, all] = await Promise.all([readCount(store, leadKey), readCount(store, ipKey), readCount(store, allKey)]);
+        if (leads >= LIMITS.leadsPerSession || ipCount >= LIMITS.leadsPerIpDay || all >= LIMITS.leadsDailyTotal) return json(429, { error: 'rate' });
+        await Promise.all([bump(store, leadKey, leads), bump(store, ipKey, ipCount), bump(store, allKey, all)]);
         const saved = await insert('ask_leads', { session_id: sessionId, ip_hash: ipHash, email, country: visitor.country, region: visitor.region, city: visitor.city });
         if (!saved) return closed('lead storage not configured');
         return json(200, { ok: true });

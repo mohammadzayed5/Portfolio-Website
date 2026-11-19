@@ -2,7 +2,7 @@
 
 // Only the most recent exchanges are sent back as context, so a long
 // conversation costs about the same per question as a short one.
-const ASK_HISTORY_TURNS = 6;
+const ASK_HISTORY_TURNS = 3;
 const ASK_MAX_CHARS = 500;
 
 // Suggested questions, three at a time. The refresh button deals the next three.
