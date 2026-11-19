@@ -7,6 +7,24 @@
 /netlify/* /index.html 404!
 /design-mocks-nov10/* /index.html 404!
 
+# Source and tooling files: needed in the repo, not on the web.
+/.claude/* /index.html 404!
+/README.md /index.html 404!
+/DEPLOYMENT.md /index.html 404!
+/DEPLOYMENT_GUIDE.md /index.html 404!
+/validate.py /index.html 404!
+/package.json /index.html 404!
+/package-lock.json /index.html 404!
+/build.mjs /index.html 404!
+/build-twin.mjs /index.html 404!
+/generate-pages.mjs /index.html 404!
+/generate-sitemap.mjs /index.html 404!
+/dev-server.mjs /index.html 404!
+/twin-sql.mjs /index.html 404!
+/ask.jsx /index.html 404!
+/app.jsx /index.html 404!
+/data.jsx /index.html 404!
+
 # Resume link points to the PDF checked into the repo (single source of truth).
 /resume /resume.pdf 301!
 

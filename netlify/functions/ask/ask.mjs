@@ -153,6 +153,47 @@ async function supabaseInsert(table, row) {
   return true;
 }
 
+// The chat's instructions and knowledge are private, so they are not in the
+// repository. They live in one row of the Supabase table ask_twin and are
+// read here, then kept in memory for a few minutes. A copy baked in at build
+// time (twin/*.md, present only on Mohammad's machine) is used if the table
+// cannot be read. With neither, the chat fails closed.
+const TWIN_TTL_MS = 5 * 60 * 1000;
+let twinCache = null; // { systemPrompt, knowledge, at }
+
+async function fetchTwin() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  const base = url.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+  const res = await fetch(`${base}/rest/v1/ask_twin?id=eq.current&select=system_prompt,knowledge`, {
+    headers: {
+      apikey: key,
+      ...(key.startsWith('eyJ') ? { authorization: `Bearer ${key}` } : {}),
+    },
+    signal: AbortSignal.timeout(2500),
+  });
+  if (!res.ok) throw new Error(`supabase ask_twin read: ${res.status}`);
+  const row = (await res.json())[0];
+  if (!row?.system_prompt || !row?.knowledge) return null;
+  return { systemPrompt: row.system_prompt, knowledge: row.knowledge };
+}
+
+async function loadTwin(fetcher = fetchTwin) {
+  if (twinCache && Date.now() - twinCache.at < TWIN_TTL_MS) return twinCache;
+  try {
+    const fresh = await fetcher();
+    if (fresh) {
+      twinCache = { ...fresh, at: Date.now() };
+      return twinCache;
+    }
+  } catch (err) {
+    console.error(`[ask] twin load failed: ${err?.message}`);
+  }
+  if (twinCache) return twinCache; // a stale copy beats none
+  return TWIN_READY ? { systemPrompt: SYSTEM_PROMPT, knowledge: KNOWLEDGE, baked: true } : null;
+}
+
 export function createHandler(deps = {}) {
   const getClient = deps.getClient ?? (() => new Anthropic());
   const getLimitStore = deps.getLimitStore ?? (() => getStore('ask-limits'));
@@ -286,8 +327,9 @@ export function createHandler(deps = {}) {
     // ---------- Question ----------
     const messages = validateMessages(body.messages);
     if (!messages) return json(400, { error: 'bad_request' });
-    if (!TWIN_READY && !deps.allowMissingTwin) return closed('twin prompt not built');
     if (!hasKey()) return closed('ANTHROPIC_API_KEY not set');
+    const twin = (await loadTwin(deps.fetchTwin)) ?? (deps.allowMissingTwin ? { systemPrompt: '', knowledge: '' } : null);
+    if (!twin) return closed('twin prompt not available');
 
     const question = messages[messages.length - 1].content;
     const source = body.source === 'prompt' ? 'prompt' : 'typed';
@@ -356,13 +398,13 @@ export function createHandler(deps = {}) {
             max_tokens: LIMITS.maxOutputTokens,
             output_config: { effort: 'low' },
             system: [
-              { type: 'text', text: SYSTEM_PROMPT },
+              { type: 'text', text: twin.systemPrompt },
               { type: 'text', text: UI_CONTRACT },
               // Everything above the visitor's messages is identical on every
               // request, so one breakpoint here caches the whole prefix.
               {
                 type: 'text',
-                text: `<knowledge>\n${KNOWLEDGE}\n</knowledge>`,
+                text: `<knowledge>\n${twin.knowledge}\n</knowledge>`,
                 cache_control: { type: 'ephemeral' },
               },
             ],
@@ -426,6 +468,7 @@ export function createHandler(deps = {}) {
         'content-type': 'application/x-ndjson; charset=utf-8',
         'cache-control': 'no-store',
         'x-accel-buffering': 'no',
+        'x-ask-src': twin.baked ? '2' : '1',
       },
     });
   };

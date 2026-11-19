@@ -123,3 +123,15 @@ select
   s.visitor_id
 from s
 order by s.first_seen desc;
+
+
+-- The chat's private instructions and knowledge: one row, id 'current'.
+-- Row-level security is on with no policies, so only the service role
+-- (the Netlify Function) can read it.
+create table if not exists public.ask_twin (
+  id text primary key,
+  system_prompt text not null,
+  knowledge text not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.ask_twin enable row level security;

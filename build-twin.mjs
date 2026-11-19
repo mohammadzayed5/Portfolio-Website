@@ -1,6 +1,9 @@
 // Bakes twin/system-prompt.md and twin/knowledge.md into a module the
 // "ask" Netlify Function imports, so the function never reads files at runtime.
-// If either file is missing the build still succeeds and the chat fails closed.
+// The twin folder is private and not in the repository, so on Netlify the files
+// are missing: the build still succeeds and the function reads the same text
+// from the Supabase table ask_twin (see twin-sql.mjs). The baked copy is a
+// fallback for a machine that has the files.
 
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, resolve } from 'path';
@@ -35,5 +38,5 @@ export const KNOWLEDGE = ${JSON.stringify(knowledge)};
 if (ready) {
   console.log(`✓ Twin prompt baked (${systemPrompt.length + knowledge.length} chars) from ${TWIN_DIR}`);
 } else {
-  console.warn(`! Twin files missing in ${TWIN_DIR}: the Ask chat will answer "Ask the real me" until they exist.`);
+  console.log(`Twin files not in ${TWIN_DIR} (expected on Netlify): the chat reads them from the ask_twin table instead.`);
 }

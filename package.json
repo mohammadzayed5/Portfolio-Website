@@ -5,6 +5,7 @@
   "description": "Mohammad Zayed portfolio site",
   "scripts": {
     "build": "node build.mjs && node build-twin.mjs && node generate-pages.mjs && node generate-sitemap.mjs",
+    "twin:sql": "node twin-sql.mjs",
     "dev": "npm run build && node dev-server.mjs"
   },
   "dependencies": {

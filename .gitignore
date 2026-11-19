@@ -71,3 +71,9 @@ assets/*.MOV
 assets/*.mov
 assets/raw/
 assets/raw-damaged/
+
+# Local assistant settings (permission lists and local paths)
+.claude/
+
+# The chat's private instructions and knowledge (stored in Supabase, see twin-sql.mjs)
+twin/
